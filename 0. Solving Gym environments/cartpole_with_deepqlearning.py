@@ -1,172 +1,175 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*- 
-
-
-"""--------------------------------------------------------------------
-REINFORCEMENT LEARNING
-
-Started on the 25/08/2017
-
-theo.alves.da.costa@gmail.com
-https://github.com/theolvs
-------------------------------------------------------------------------
-"""
-
-import numpy as np
-import matplotlib.pyplot as plt
+# -*- coding: utf-8 -*-
+import random
 import gym
-
-# Deep Learning (Keras, Tensorflow)
-import tensorflow as tf
+import numpy as np
+from collections import deque
 from keras.models import Sequential
-from keras.optimizers import SGD,RMSprop, Adam
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import MaxPooling2D,ZeroPadding2D,Conv2D
-from keras.utils.np_utils import to_categorical
+from keras.layers import Dense
+from keras.optimizers import Adam
 
-env = gym.make('CartPole-v0')
-N_EPISODES = 1000
-EPSILON = 1
+
+N_EPISODES = 500
+EPSILON = 1.0
 EPSILON_MIN = 0.01
 EPSILON_DECAY = 0.995
 BATCH_SIZE = 32
-MAX_STEPS = 100
+MAX_STEPS = 500
 GAMMA = 0.95
 lr = 0.001
 
 
+
+import sys
+sys.path.insert(0,'..')
+
+
+class DQNAgent(object):
+    def __init__(self,states,actions):
+        self.epsilon = EPSILON
+        self.epsilon_min = EPSILON_MIN
+        self.epsilon_decay = EPSILON_DECAY
+        self.batch_size = BATCH_SIZE
+        self.gamma = GAMMA
+        self.lr = lr
+        self.memory = Memory()
+        self.model = self.build_model(states,actions)
+
+
+    def build_model(self,states,actions):
+        model = Sequential()
+        model.add(Dense(24,input_dim = states,activation = "relu"))
+        model.add(Dense(24,activation = "relu"))
+        model.add(Dense(actions,activation = "linear"))
+        model.compile(loss='mse',
+                      optimizer=Adam(lr=self.lr))
+        return model
+
+
+    def train_on_batch(self,batch_size = 32):
+        if len(self.memory.cache) > batch_size:
+            batch = random.sample(self.memory.cache, batch_size)
+        else:
+            batch = self.memory.cache
+
+        for state,action,reward,next_state,done in batch:
+            state = self.expand_state_vector(state)
+            next_state = self.expand_state_vector(next_state)
+
+
+            targets = self.model.predict(state)
+
+            if not done:
+                target = reward + GAMMA * np.amax(self.model.predict(next_state)[0])
+            else:
+                target = reward
+
+            targets[0][action] = target
+
+            self.model.fit(state,targets,epochs = 1,verbose = 0)
+
+
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+
+    def expand_state_vector(self,state):
+        if len(state.shape) == 1:
+            return np.expand_dims(state,axis = 0)
+        else:
+            return state
+
+
+
+
+    def act(self,state):
+        state = self.expand_state_vector(state)
+
+        q = self.model.predict(state)
+
+        if np.random.rand() > self.epsilon:
+            a = np.argmax(q[0])
+        else:
+            a = np.random.randint(env.action_space.n)
+
+        return a 
+
+
+
+    def remember(self,state,action,reward,next_state,done):
+        self.memory.save(state,action,reward,next_state,done)
+
+
+
+
+
+
 class Memory(object):
     def __init__(self):
-        self.inputs = None
-        self.targets = None
-        self.length = 0
+        self.cache = deque(maxlen=2000)
     
-    def cache(self,X,y):
-        self.inputs = np.vstack([self.inputs,X]) if self.inputs is not None else X
-        self.targets = np.vstack([self.targets,y]) if self.targets is not None else y
-        self.length = len(self.inputs)
-        
-        
-    def sample(self,batch_size = 32):
-        if self.length > batch_size:
-            selection = np.random.choice(range(self.length),batch_size,replace = False)
-            inputs = self.inputs[selection,:]
-            targets = self.targets[selection,:]
-            return inputs,targets
-        else:
-            return self.inputs,self.targets
-        
-        
+    def save(self,state,action,reward,next_state,done):
+        self.cache.append((state,action,reward,next_state,done))
+
     def empty_cache(self):
         self.__init__()
 
 
 
 
-def initialize_Q_model(states,actions):
-    model = Sequential()
-    model.add(Dense(32,input_dim = states,activation = "relu"))
-    model.add(Dense(32,activation = "relu"))
-    model.add(Dense(actions))
-    model.add(Activation("linear"))
-
-    model.compile(loss='mse',
-                  optimizer=Adam(lr=lr),
-                  metrics=['accuracy'])
-    return model
-
-
-model = initialize_Q_model(len(env.observation_space.high),env.action_space.n)
-memory = Memory()
 
 
 
 
 
-epsilon = EPSILON
+
+
+
 
 
 
 if __name__ == "__main__":
-
-
+    env = gym.make('CartPole-v0')
+    agent = DQNAgent(len(env.observation_space.high),env.action_space.n)
+    state_size = env.observation_space.shape[0]
+    action_size = env.action_space.n
+    EPISODES = 500
     rewards = []
 
-    # ITERATION OVER EPISODES
+    # # ITERATION OVER EPISODES
     for i_episode in range(N_EPISODES):
 
         s = env.reset()
-
-
-        
         episode_reward = 0
-        i = 0
+
 
         # EPISODE LOOP
-        while i < MAX_STEPS:
+        for i_step in range(MAX_STEPS):
+        
 
-
-            
-            env.render()
-
-            # Convert the state to a state vector
-            s_vector = np.expand_dims(s,axis = 0)
-            
-            # Choose an action with a decayed epsilon greedy exploration
-            q = model.predict(s_vector)
-            if np.random.rand() > epsilon:
-                a = np.argmax(q)
-            else:
-                a = np.random.randint(env.action_space.n)
-                
+            a = agent.act(s)
             
             # Take the action, and get the reward from environment
-            s_new,r,done,u = env.step(a)
+            s_next,r,done,info = env.step(a)
 
-            
-            # Convert the new state to a state vector
-            s_new_vector = np.expand_dims(s_new,axis = 0)
-            q_new = model.predict(s_new_vector)
-            
-            
-            # print("-","reward ",r," action ",a,"!!!" if done else "")
-            
-            # Update our knowledge in the Q-table
-            X = s_vector
-            y = q
-            
-            if not done:
-                y[0][a] = r + GAMMA * np.max(q_new)
-            else:
-                y[0][a] = r
+            # Tweaking the reward
+            r = r if not done else -10
 
-            
             # Caching to train later
-            if memory is not None:
-                memory.cache(X,y)
+            agent.remember(s,a,r,s_next,done)
                 
-                
-            
-            
-            
-            # Update the caches
-            episode_reward += r
-            s = s_new
+            # Go to the next state
+            s = s_next
             
             # If the episode is terminated
-            i += 1
             if done:
-                print("Episode {} finished after {} timesteps".format(i_episode+1,i+1))
+                print("Episode {}/{} finished after {} timesteps - epsilon : {:.2}".format(i_episode+1,N_EPISODES,i_step,agent.epsilon))
                 break
-
-
-        rewards.append(episode_reward)
+    
 
         # Training
-        inputs,targets = memory.sample(BATCH_SIZE)
-        if epsilon >= EPSILON_MIN : epsilon *= EPSILON_DECAY
-        print(epsilon)
-        model.fit(inputs,targets,epochs = 1,verbose = 0)
+        agent.train_on_batch()
+
+
 
     average_running_rewards = np.cumsum(rewards)/np.array(range(1,len(rewards)+1))
     plt.figure(figsize = (15,4))
