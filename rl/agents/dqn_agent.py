@@ -7,6 +7,8 @@ REINFORCEMENT LEARNING
 
 Started on the 25/08/2017
 
+Inspiration from https://keon.io/deep-q-learning/
+
 theo.alves.da.costa@gmail.com
 https://github.com/theolvs
 ------------------------------------------------------------------------
