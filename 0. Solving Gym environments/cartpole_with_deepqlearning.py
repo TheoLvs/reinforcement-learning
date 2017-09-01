@@ -56,6 +56,7 @@ from rl.agents.dqn_agent import DQNAgent
 N_EPISODES = 1000
 MAX_STEPS = 1000
 RENDER = True
+RENDER_EVERY = 50
 
 
 
@@ -66,7 +67,7 @@ RENDER = True
 if __name__ == "__main__":
 
     # Define the gym environment
-    env = gym.make('CartPole-v0')
+    env = gym.make('CartPole-v1')
 
     # Get the environement action and observation space
     state_size = env.observation_space.shape[0]
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         for i_step in range(MAX_STEPS):
         
             # Render the environement
-            if RENDER : env.render()
+            if RENDER and (i_step % RENDER_EVERY == 0) : env.render()
 
             # The agent chose the action considering the given current state
             a = agent.act(s)
