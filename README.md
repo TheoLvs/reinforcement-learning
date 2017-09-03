@@ -20,6 +20,8 @@
 ##### Q Learning references
 - [Q Learning tutorial by Arthur Juliani](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
 - [Q Learning tutorial on Keon.io](https://keon.io/deep-q-learning/)
+- [Q Learning tutorial by Udacity](https://github.com/udacity/deep-learning/blob/master/reinforcement/Q-learning-cart.ipynb)
+
 
 ##### Deep Q Learning
 - [David Silver's Deep Q Learning course](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Resources_files/deep_rl.pdf)
@@ -30,5 +32,8 @@
 - [Deep Reinforcement Learning: Pong from Pixels](http://karpathy.github.io/2016/05/31/rl/) Andrej Karpathy's blog article on RL (always a reference)
 
 
+
+##### Evolution strategies
+- [How evolution taught us the “genetic algorithm”](https://blog.sicara.com/was-darwin-a-great-computer-scientist-81ffa1dd72f9)
 
 ***
