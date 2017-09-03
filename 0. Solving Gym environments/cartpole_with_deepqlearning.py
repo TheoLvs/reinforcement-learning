@@ -98,7 +98,7 @@ if __name__ == "__main__":
         for i_step in range(MAX_STEPS):
         
             # Render the environement
-            if RENDER and (i_step % RENDER_EVERY == 0) : env.render()
+            if RENDER : env.render() #and (i_step % RENDER_EVERY == 0)
 
             # The agent chose the action considering the given current state
             a = agent.act(s)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
 
         # Training
-        agent.train_on_batch()
+        agent.train()
 
 
 
