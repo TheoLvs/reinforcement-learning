@@ -67,7 +67,7 @@ class DQNAgent(Agent):
 
 
 
-    def train_on_batch(self,batch_size = 32):
+    def train(self,batch_size = 32):
         if len(self.memory.cache) > batch_size:
             batch = random.sample(self.memory.cache, batch_size)
         else:
@@ -81,7 +81,7 @@ class DQNAgent(Agent):
             targets = self.model.predict(state)
 
             if not done:
-                target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
+                target = reward + self.gamma * np.max(self.model.predict(next_state))
             else:
                 target = reward
 
