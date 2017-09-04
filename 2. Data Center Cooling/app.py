@@ -21,7 +21,8 @@ https://github.com/theolvs
 # USUAL
 import os
 import numpy as np
-
+from tqdm import tqdm
+from copy import deepcopy
 
 # DASH IMPORT
 import dash
@@ -35,22 +36,18 @@ import sys
 sys.path.append("C:/git/reinforcement-learning/")
 
 
-class Clicks(object):
-    def __init__(self):
-        self.count = 0
-
-reset_clicks = Clicks()
-train_clicks = Clicks()
 
 #--------------------------------------------------------------------------------
-from rl.env.data_center_cooling import DataCenterCooling
+from rl.envs.data_center_cooling import DataCenterCooling
 from rl.agents.q_agent import QAgent
 from rl.agents.dqn_agent import DQNAgent
+from rl import utils
 
 
-env = DataCenterCooling()
+
 
 def run_episode(env,agent,max_step = 100,verbose = 1):
+
     s = env.reset()
     
     episode_reward = 0
@@ -84,6 +81,8 @@ def run_episode(env,agent,max_step = 100,verbose = 1):
 
 
 def run_n_episodes(env,n_episodes = 2000,lr = 0.8,gamma = 0.95):
+
+    environment = deepcopy(env)
     
     # Initialize the agent
     states_size = len(env.observation_space)
@@ -98,21 +97,29 @@ def run_n_episodes(env,n_episodes = 2000,lr = 0.8,gamma = 0.95):
     for i in tqdm(range(n_episodes)):
         
         # Run the episode
-        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+        environment,agent,episode_reward = run_episode(environment,agent,verbose = 0)
         rewards.append(episode_reward)
         
     
     # Plot rewards
-    utils.plot_average_running_rewards(rewards)
+    # utils.plot_average_running_rewards(rewards)
         
-    return env,agent,rewards
+    return environment,agent,rewards
         
 
+class Clicks(object):
+    def __init__(self):
+        self.count = 0
 
+reset_clicks = Clicks()
+train_clicks = Clicks()
+env = DataCenterCooling()
+np.random.seed()
 
 #---------------------------------------------------------------------------------
 # CREATE THE APP
 app = dash.Dash("Data Cooling Center")
+
 
 # # Making the app available offline
 offline = False
@@ -131,7 +138,7 @@ container_style = {
 
 
 
-AGENTS = [{"label":x,"value":x} for x in ["Q Agent","Deep-Q-Network Agent","Policy Gradient Agent"]]
+AGENTS = [{"label":x,"value":x} for x in ["Q Agent","SARSA Agent","Deep-Q-Network Agent","Policy Gradient Agent"]]
 
 #---------------------------------------------------------------------------------
 # LAYOUT
@@ -150,9 +157,10 @@ app.layout = html.Div(children=[
             html.P("Cooling levels",id = "cooling"),
             dcc.Slider(min=10,max=100,step=10,value=10,id = "levels-cooling"),
             html.P("Cost factor",id = "cost-factor"),
-            dcc.Slider(min=1,max=10,step=1,value=5,id = "levels-cost-factor"),
+            dcc.Slider(min=0,max=10,step=1,value=5,id = "levels-cost-factor"),
             html.P("Risk factor",id = "risk-factor"),
             dcc.Slider(min=1.0,max=2.5,step=0.1,value=1.6,id = "levels-risk-factor"),    
+            html.Br(),
             html.Button("Reset",id = "reset-env",style = style,n_clicks = 0),
         ],style = {"height":"50%"}),
 
@@ -160,10 +168,10 @@ app.layout = html.Div(children=[
         html.Div([
             html.H4("Agent",style = {'color': "rgba(117, 117, 117, 0.95)",**style}),
             dcc.Dropdown(id = "input-agent",options = AGENTS,value = "Q Agent",multi = False),
-            html.Br(),
-            dcc.Slider(min=100,max=2500,step=50,value=500,id = "n-episodes"),
-            html.Br(),
-            dcc.Slider(min=100,max=2500,step=50,value=500,id = "gamma"),
+            html.P("N episodes",id = "input-episodes"),
+            dcc.Slider(min=200,max=5000,step=200,value=1000,id = "n-episodes"),
+            html.P("Learning rate",id = "input-lr"),
+            dcc.Slider(min=0.001,max=1.0,step=0.005,value=0.1,id = "lr"),
             html.Br(),
             html.Button("Train",id = "training",style = style,n_clicks = 0),
         ],style = {"height":"50%"}),
@@ -197,20 +205,35 @@ app.layout = html.Div(children=[
 # Callback to stop the streaming
 @app.callback(
     Output("render","figure"),
-    [Input('reset-env','n_clicks'),Input('levels-cost-factor','value'),Input('levels-risk-factor','value')],
-    state = [State('levels-cooling','value')]
+    [Input('reset-env','n_clicks'),Input('training','n_clicks'),Input('levels-cost-factor','value'),Input('levels-risk-factor','value')],
+    state = [State('levels-cooling','value'),State('lr','value'),State('n-episodes','value')]
 
     )
-def render(click_reset,cost_factor,risk_factor,levels_cooling):
+def render(click_reset,click_training,cost_factor,risk_factor,levels_cooling,lr,n_episodes):
+
+
+    print("Reset ",click_reset," - ",reset_clicks.count)
+    print("Train ",click_training," - ",train_clicks.count)
+
+
     if click_reset > reset_clicks.count:
+        np.random.seed()
         reset_clicks.count = click_reset
         env.__init__(levels_cooling = levels_cooling,risk_factor = risk_factor,cost_factor = cost_factor)
+
+    elif click_training > train_clicks.count:
+        train_clicks.count = click_training
+        print(env.risk_factor,env.cost_factor)
+        env_temp,agent,rewards = run_n_episodes(env,n_episodes = n_episodes,lr = lr)
+        env.cooling = env_temp.cooling
     else:
         env.risk_factor = risk_factor
         env.cost_factor = cost_factor
 
 
+
     return env.render(with_plotly = True)
+
 
 
 
@@ -218,6 +241,8 @@ def render(click_reset,cost_factor,risk_factor,levels_cooling):
     Output("cooling","children"),
     [Input('levels-cooling','value')])
 def update_cooling(value):
+    env.levels_cooling = value
+    env.define_cooling(value)
     return "Cooling levels : {}".format(value)
 
 
@@ -235,6 +260,18 @@ def update_risk(value):
     [Input('levels-cost-factor','value')])
 def update_cost(value):
     return "Cost factor : {}".format(value)
+
+@app.callback(
+    Output("input-episodes","children"),
+    [Input('n-episodes','value')])
+def update_episodes(value):
+    return "N episodes : {}".format(value)
+
+@app.callback(
+    Output("input-lr","children"),
+    [Input('lr','value')])
+def update_lr(value):
+    return "Learning rate : {}".format(value)
 
 
 
@@ -260,3 +297,4 @@ for css in external_css:
 # RUN SERVER
 if __name__ == '__main__':
     app.run_server(debug=True)
+    np.random.seed()
