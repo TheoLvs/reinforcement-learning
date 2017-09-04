@@ -186,21 +186,22 @@ class DataCenterCooling(object):
 
         # CALCULATING THE LOSSES
         if cooling >= activity:
-            loss = self.cost_factor * (cooling - activity)
+            cost = (0 if self.cost_factor < 1.0 else 1)*(cooling)**np.sqrt(self.cost_factor)
             failure = 0
         else:
             difference = (activity-cooling)/(cooling+1)
             default_probability = np.tanh(difference)
             if np.random.rand() > default_probability or self.risk_factor <= 1.0:
-                loss = 0
+                cost = 0
             else:
-                loss = np.random.normal(loc = self.risk_factor,scale = 0.4) * 100
+                cost = np.random.normal(loc = self.risk_factor,scale = 0.4) * 150
 
-            loss += self.cost_factor * (cooling)
+            # cost += (cooling * min(1,self.cost_factor))**2
+            cost += (0 if self.cost_factor < 1.0 else 1)*(cooling)
 
-            failure = loss
+            failure = cost
 
-        return win,loss,failure
+        return win,cost,failure
 
 
 
