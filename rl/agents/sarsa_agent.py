@@ -34,7 +34,7 @@ from rl.agents.base_agent import Agent
 
 
 
-class QAgent(Agent):
+class SarsaAgent(Agent):
     def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.999,gamma = 0.95,lr = 0.8):
         self.states_size = states_size
         self.actions_size = actions_size
@@ -59,7 +59,8 @@ class QAgent(Agent):
 
 
     def train(self,s,a,r,s_next):
-        self.Q[s,a] = self.Q[s,a] + self.lr * (r + self.gamma*np.max(self.Q[s_next,a]) - self.Q[s,a])
+        a_next = self.act(s_next)
+        self.Q[s,a] = self.Q[s,a] + self.lr * (r + self.gamma*self.Q[s_next,a_next] - self.Q[s,a])
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
