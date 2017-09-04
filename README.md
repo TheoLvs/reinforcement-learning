@@ -36,4 +36,16 @@
 ##### Evolution strategies
 - [How evolution taught us the “genetic algorithm”](https://blog.sicara.com/was-darwin-a-great-computer-scientist-81ffa1dd72f9)
 
+
+##### AlphaGo
+- [ELI5 MCTS](https://www.reddit.com/r/explainlikeimfive/comments/4aimqo/eli5_alpha_go_and_its_decision_making_process/)
+- [How AlphaGo works](https://www.tastehit.com/blog/google-deepmind-alphago-how-it-works/)
+- [Original Paper for AlphaGo](http://airesearch.com/wp-content/uploads/2016/01/deepmind-mastering-go.pdf) by David Silver
+
+
+##### Monte Carlo Tree Search
+- [Udacity videos on MCTS](https://www.youtube.com/watch?v=onBYsen2_eA)
+
+
+
 ***
