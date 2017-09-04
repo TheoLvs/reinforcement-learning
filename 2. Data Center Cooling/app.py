@@ -31,7 +31,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, Event, State
 import plotly.graph_objs as go
 
-
 import sys
 sys.path.append("C:/git/reinforcement-learning/")
 
@@ -41,6 +40,7 @@ sys.path.append("C:/git/reinforcement-learning/")
 from rl.envs.data_center_cooling import DataCenterCooling
 from rl.agents.q_agent import QAgent
 from rl.agents.dqn_agent import DQNAgent
+from rl.agents.sarsa_agent import SarsaAgent
 from rl import utils
 
 
@@ -80,7 +80,7 @@ def run_episode(env,agent,max_step = 100,verbose = 1):
 
 
 
-def run_n_episodes(env,n_episodes = 2000,lr = 0.8,gamma = 0.95):
+def run_n_episodes(env,type_agent = "Q Agent",n_episodes = 2000,lr = 0.8,gamma = 0.95):
 
     environment = deepcopy(env)
     
@@ -88,8 +88,13 @@ def run_n_episodes(env,n_episodes = 2000,lr = 0.8,gamma = 0.95):
     states_size = len(env.observation_space)
     actions_size = len(env.action_space)
 
-    agent = QAgent(states_size,actions_size,lr = lr,gamma = gamma)
-    
+    if type_agent == "Q Agent":
+        print("... Using Q Agent")
+        agent = QAgent(states_size,actions_size,lr = lr,gamma = gamma)
+    elif type_agent == "SARSA Agent":    
+        print("... Using SARSA Agent")
+        agent = SarsaAgent(states_size,actions_size,lr = lr,gamma = gamma)
+
     # Store the rewards
     rewards = []
     
@@ -99,11 +104,7 @@ def run_n_episodes(env,n_episodes = 2000,lr = 0.8,gamma = 0.95):
         # Run the episode
         environment,agent,episode_reward = run_episode(environment,agent,verbose = 0)
         rewards.append(episode_reward)
-        
-    
-    # Plot rewards
-    # utils.plot_average_running_rewards(rewards)
-        
+
     return environment,agent,rewards
         
 
@@ -157,9 +158,9 @@ app.layout = html.Div(children=[
             html.P("Cooling levels",id = "cooling"),
             dcc.Slider(min=10,max=100,step=10,value=10,id = "levels-cooling"),
             html.P("Cost factor",id = "cost-factor"),
-            dcc.Slider(min=0.0,max=5,step=0.1,value=1.0,id = "levels-cost-factor"),
+            dcc.Slider(min=0.0,max=5,step=0.1,value=1,id = "levels-cost-factor"),
             html.P("Risk factor",id = "risk-factor"),
-            dcc.Slider(min=0.0,max=5,step=0.1,value=1.6,id = "levels-risk-factor"),    
+            dcc.Slider(min=0.0,max=5,step=0.1,value=1,id = "levels-risk-factor"),    
             html.Br(),
             html.Button("Reset",id = "reset-env",style = style,n_clicks = 0),
         ],style = {"height":"50%"}),
@@ -169,7 +170,7 @@ app.layout = html.Div(children=[
             html.H4("Agent",style = {'color': "rgba(117, 117, 117, 0.95)",**style}),
             dcc.Dropdown(id = "input-agent",options = AGENTS,value = "Q Agent",multi = False),
             html.P("N episodes",id = "input-episodes"),
-            dcc.Slider(min=200,max=5000,step=200,value=1000,id = "n-episodes"),
+            dcc.Slider(min=500,max=10000,step=500,value=5000,id = "n-episodes"),
             html.P("Learning rate",id = "input-lr"),
             dcc.Slider(min=0.001,max=1.0,step=0.005,value=0.1,id = "lr"),
             html.Br(),
@@ -206,10 +207,10 @@ app.layout = html.Div(children=[
 @app.callback(
     Output("render","figure"),
     [Input('reset-env','n_clicks'),Input('training','n_clicks'),Input('levels-cost-factor','value'),Input('levels-risk-factor','value')],
-    state = [State('levels-cooling','value'),State('lr','value'),State('n-episodes','value')]
+    state = [State('levels-cooling','value'),State('lr','value'),State('n-episodes','value'),State('input-agent','value')]
 
     )
-def render(click_reset,click_training,cost_factor,risk_factor,levels_cooling,lr,n_episodes):
+def render(click_reset,click_training,cost_factor,risk_factor,levels_cooling,lr,n_episodes,type_agent):
 
 
     print("Reset ",click_reset," - ",reset_clicks.count)
@@ -217,14 +218,14 @@ def render(click_reset,click_training,cost_factor,risk_factor,levels_cooling,lr,
 
 
     if click_reset > reset_clicks.count:
-        np.random.seed()
         reset_clicks.count = click_reset
-        env.__init__(levels_cooling = levels_cooling,risk_factor = risk_factor,cost_factor = cost_factor)
+        env.__init__(levels_cooling = levels_cooling,risk_factor = risk_factor,cost_factor = cost_factor,keep_cooling = True)
 
     elif click_training > train_clicks.count:
         train_clicks.count = click_training
-        print(env.risk_factor,env.cost_factor)
-        env_temp,agent,rewards = run_n_episodes(env,n_episodes = n_episodes,lr = lr)
+        env_temp,agent,rewards = run_n_episodes(env,n_episodes = n_episodes,lr = lr,type_agent = type_agent)
+        utils.plot_average_running_rewards(rewards,"C:/Users/talvesdacosta/Desktop/results.png")
+        # os.system("start "+"C:/Users/talvesdacosta/Desktop/results.png")
         env.cooling = env_temp.cooling
     else:
         env.risk_factor = risk_factor

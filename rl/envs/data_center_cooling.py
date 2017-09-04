@@ -49,7 +49,7 @@ np.random.seed(1)
 
 
 class DataCenterCooling(object):
-    def __init__(self,levels_activity = 20,levels_cooling = 10,cost_factor = 5,risk_factor = 1.6):
+    def __init__(self,levels_activity = 20,levels_cooling = 10,cost_factor = 5,risk_factor = 1.6,keep_cooling = False):
 
         self.hour = 0
         self.cost_factor = cost_factor
@@ -57,7 +57,8 @@ class DataCenterCooling(object):
         self.levels_activity = levels_activity
         self.levels_cooling = levels_cooling
         self.define_activity(levels_activity)
-        self.define_cooling(levels_cooling)
+        if not hasattr(self,"cooling") or not keep_cooling:
+            self.define_cooling(levels_cooling)
 
         
     def define_activity(self,levels_activity):
@@ -191,13 +192,13 @@ class DataCenterCooling(object):
         else:
             difference = (activity-cooling)/(cooling+1)
             default_probability = np.tanh(difference)
-            if np.random.rand() > default_probability or self.risk_factor <= 1.0:
+            if np.random.rand() > default_probability or self.risk_factor < 1.0:
                 cost = 0
             else:
                 cost = np.random.normal(loc = self.risk_factor,scale = 0.4) * 150
 
             # cost += (cooling * min(1,self.cost_factor))**2
-            cost += (0 if self.cost_factor < 1.0 else 1)*(cooling)
+            cost += (0 if self.cost_factor < 1.0 else (1-1/(self.cost_factor+0.1)))*(cooling)
 
             failure = cost
 
