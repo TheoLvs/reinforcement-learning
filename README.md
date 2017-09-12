@@ -37,6 +37,21 @@
 
 ##### Evolution strategies
 - [How evolution taught us the “genetic algorithm”](https://blog.sicara.com/was-darwin-a-great-computer-scientist-81ffa1dd72f9)
+- [Making a robot learn how to move, part 1 — Evolutionary algorithms](https://medium.com/towards-data-science/making-a-robot-learn-how-to-move-part-1-evolutionary-algorithms-340f239c9cd2)
+
+
+##### Actor Critic, A2C, ACKTR
+- [A3C tutorial tutorial by Arthur Juliani](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-8-asynchronous-actor-critic-agents-a3c-c88f72a5e9f2)
+- [A3C tutorial with Keras and OpenAI](http://www.rage.net/~greg/2016-07-05-ActorCritic-with-OpenAI-Gym.html)
+- [A3C explananations and implementations](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html)
+- [ACKTR & A2C](https://blog.openai.com/baselines-acktr-a2c) - by OpenAI
+
+
+
+##### PPO, TRPO
+- [Proximal Policy Optimization](https://blog.openai.com/openai-baselines-ppo/) - by OpenAI
+- [PPO,TRPO tutorials](https://learningai.io/projects/2017/07/28/ai-gym-workout.html)
+
 
 
 ##### AlphaGo
@@ -50,4 +65,25 @@
 
 
 
+
 ***
+### Papers
+
+- [Discrete Sequential Prediction of Continuous Actions for Deep RL](https://arxiv.org/abs/1705.05035)
+- [Emotion in Reinforcement Learning Agents and Robots: A Survey](https://arxiv.org/abs/1705.05172)
+- [Combating Reinforcement Learning's Sisyphean Curse with Intrinsic Fear](https://arxiv.org/abs/1611.01211)
+- [Curiosity-driven Exploration by Self-supervised Prediction](https://arxiv.org/abs/1705.05363)
+- [End-to-end optimization of goal-driven and visually grounded dialogue systems](https://arxiv.org/abs/1703.05423)
+- [Deep reinforcement learning from human preferences](https://arxiv.org/abs/1706.03741) - OpenAI
+- [Programmable Agents](https://arxiv.org/abs/1706.06383) - Deepmind
+- [Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments](https://arxiv.org/pdf/1706.02275.pdf) - OpenAI
+- [Actor-Critic Reinforcement Learning with Simultaneous Human Control and Feedback](https://arxiv.org/abs/1703.01274)
+- [Noisy Networks for Exploration](https://arxiv.org/abs/1706.10295)
+- [Hindsight Experience Replay](https://arxiv.org/abs/1707.01495)
+- [DARLA: Improving Zero-Shot Transfer in Reinforcement Learning](https://arxiv.org/pdf/1707.08475.pdf)
+- [Leveraging Demonstrations for Deep Reinforcement Learning on Robotics Problems with Sparse Rewards](https://arxiv.org/pdf/1707.08817.pdf)
+- [Evolution Strategies as a Scalable Alternative to Reinforcement Learning](https://arxiv.org/abs/1703.03864)
+- [A Distributional Perspective on Reinforcement Learning](https://arxiv.org/abs/1707.06887)
+- [Intrinsically Motivated Goal Exploration Processes with Automatic Curriculum Learning](https://arxiv.org/abs/1708.02190?)
+- [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/pdf/1602.01783.pdf)
+- [Value Iteration Networks](https://arxiv.org/pdf/1602.02867.pdf)
