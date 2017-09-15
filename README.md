@@ -64,6 +64,9 @@
 - [Udacity videos on MCTS](https://www.youtube.com/watch?v=onBYsen2_eA)
 
 
+##### Misc
+- [Learning to optimize with RL](http://bair.berkeley.edu/blog/2017/09/12/learning-to-optimize-with-rl/)
+
 
 
 ***
@@ -87,3 +90,4 @@
 - [Intrinsically Motivated Goal Exploration Processes with Automatic Curriculum Learning](https://arxiv.org/abs/1708.02190?)
 - [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/pdf/1602.01783.pdf)
 - [Value Iteration Networks](https://arxiv.org/pdf/1602.02867.pdf)
+- [A deep reinforcement learning chatbot](https://arxiv.org/pdf/1709.02349.pdf) - MILA
