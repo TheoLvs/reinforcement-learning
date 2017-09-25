@@ -68,6 +68,9 @@
 - [Learning to optimize with RL](http://bair.berkeley.edu/blog/2017/09/12/learning-to-optimize-with-rl/)
 
 
+##### Environment
+- [Unity Agents](https://blogs.unity3d.com/2017/09/19/introducing-unity-machine-learning-agents/)
+- [SerpentAI](https://github.com/SerpentAI/SerpentAI)
 
 ***
 ### Papers
@@ -91,3 +94,5 @@
 - [Asynchronous Methods for Deep Reinforcement Learning](https://arxiv.org/pdf/1602.01783.pdf)
 - [Value Iteration Networks](https://arxiv.org/pdf/1602.02867.pdf)
 - [A deep reinforcement learning chatbot](https://arxiv.org/pdf/1709.02349.pdf) - MILA
+- [The Uncertainty Bellman Equation and Exploration](https://arxiv.org/abs/1709.05380)
+- [Deep Reinforcement Learning that Matters](https://arxiv.org/abs/1709.06560)
