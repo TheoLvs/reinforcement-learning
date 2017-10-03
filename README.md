@@ -97,3 +97,4 @@
 - [The Uncertainty Bellman Equation and Exploration](https://arxiv.org/abs/1709.05380)
 - [Deep Reinforcement Learning that Matters](https://arxiv.org/abs/1709.06560)
 - [Overcoming Exploration in Reinforcement Learning with Demonstrations](https://arxiv.org/abs/1709.10089)
+- [Using Simulation and Domain Adaptation to Improve Efficiency of Deep Robotic Grasping](https://arxiv.org/abs/1709.07857)
