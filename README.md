@@ -96,3 +96,4 @@
 - [A deep reinforcement learning chatbot](https://arxiv.org/pdf/1709.02349.pdf) - MILA
 - [The Uncertainty Bellman Equation and Exploration](https://arxiv.org/abs/1709.05380)
 - [Deep Reinforcement Learning that Matters](https://arxiv.org/abs/1709.06560)
+- [Overcoming Exploration in Reinforcement Learning with Demonstrations](https://arxiv.org/abs/1709.10089)
