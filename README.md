@@ -38,7 +38,7 @@
 ##### Evolution strategies
 - [How evolution taught us the “genetic algorithm”](https://blog.sicara.com/was-darwin-a-great-computer-scientist-81ffa1dd72f9)
 - [Making a robot learn how to move, part 1 — Evolutionary algorithms](https://medium.com/towards-data-science/making-a-robot-learn-how-to-move-part-1-evolutionary-algorithms-340f239c9cd2)
-
+- [Optimize a quadratic function with ES](https://gist.github.com/karpathy/77fbb6a8dac5395f1b73e7a89300318d) - Andrej Karpathy
 
 ##### Actor Critic, A2C, ACKTR
 - [A3C tutorial tutorial by Arthur Juliani](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-8-asynchronous-actor-critic-agents-a3c-c88f72a5e9f2)
