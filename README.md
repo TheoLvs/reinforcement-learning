@@ -47,6 +47,7 @@
 - [A3C tutorial with Keras and OpenAI](http://www.rage.net/~greg/2016-07-05-ActorCritic-with-OpenAI-Gym.html)
 - [A3C explananations and implementations](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html)
 - [ACKTR & A2C](https://blog.openai.com/baselines-acktr-a2c) - by OpenAI
+- [ACKTR & A3C implementation in PyTorch](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr)
 
 
 
@@ -100,3 +101,7 @@
 - [Deep Reinforcement Learning that Matters](https://arxiv.org/abs/1709.06560)
 - [Overcoming Exploration in Reinforcement Learning with Demonstrations](https://arxiv.org/abs/1709.10089)
 - [Using Simulation and Domain Adaptation to Improve Efficiency of Deep Robotic Grasping](https://arxiv.org/abs/1709.07857)
+- [Rainbow: Combining Improvements in Deep Reinforcement Learning](https://arxiv.org/pdf/1710.02298.pdf)
+- [Optimizing Long Short-Term Memory Recurrent Neural Networks UsingAnt Colony Optimization to Predict Turbine Engine Vibration](https://arxiv.org/pdf/1710.03753.pdf)
+- [Continuous Adaptation via Meta-Learning in Nonstationary and Competitive Environments](https://arxiv.org/pdf/1710.03641.pdf)
+- [Emergent Complexity via Multi-Agent Competition](https://arxiv.org/pdf/1710.03748.pdf)
