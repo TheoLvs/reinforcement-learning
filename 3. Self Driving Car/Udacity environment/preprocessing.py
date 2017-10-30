@@ -108,19 +108,30 @@ def categorize_lines(lines):
 
 
 
-def intersection_lines(left,right):
-    get_coord = lambda v : (v[0],v[2],v[1],v[3])
-    get_a = lambda x1,x2,y1,y2 : (y2-y1)/(x2-x1)
-    get_b = lambda x1,x2,y1,y2 : (y1*x2 - y2*x1)/(x2-x1)
-    get_x = lambda a1,a2,b1,b2 : (b2-b1)/(a1-a2)
+def intersection_lines(left,right,width = None):
+    if len(left) > 0 and len(right) > 0:
+        get_coord = lambda v : (v[0],v[2],v[1],v[3])
+        get_a = lambda x1,x2,y1,y2 : (y2-y1)/(x2-x1)
+        get_b = lambda x1,x2,y1,y2 : (y1*x2 - y2*x1)/(x2-x1)
+        get_x = lambda a1,a2,b1,b2 : (b2-b1)/(a1-a2)
 
-    left = get_coord(left[0])
-    right = get_coord(right[0])
+        left = get_coord(left[0])
+        right = get_coord(right[0])
 
-    a_left,a_right = get_a(*left),get_a(*right)
-    b_left,b_right = get_b(*left),get_b(*right)
+        a_left,a_right = get_a(*left),get_a(*right)
+        b_left,b_right = get_b(*left),get_b(*right)
 
-    return get_x(a_left,a_right,b_left,b_right)
+        return get_x(a_left,a_right,b_left,b_right)
+
+    elif len(left) == 0:
+
+        return np.int32(width/4)
+
+    elif len(right) == 0:
+        return np.int32(3*width/4)
+
+    else:
+        return np.int32(width/2)
 
 
 
@@ -136,6 +147,7 @@ class CameraImage(object):
     def __init__(self,image):
         self.img = image
         self.array = self.to_array()
+        self.original_array = np.copy(self.array)
         
     def to_array(self):
         return np.array(self.img)
@@ -151,7 +163,7 @@ class CameraImage(object):
     def preprocess(self,threshold = 50,min_length = 50,main_lines = True):
 
         # Basic preprocessing
-        img = to_black_and_white(self.array)
+        img = to_black_and_white(self.original_array)
         img = detect_edges(img,300,600)
         img = gaussian_smooth(img)
 
@@ -168,5 +180,12 @@ class CameraImage(object):
 
 
     def act(self):
-        pass
-        
+        left,right = self.preprocess(main_lines = True)
+        width = self.array.shape[1]
+        middle = np.int32(width/2)
+        intersection = intersection_lines(left,right,width = width)
+        deviation = (intersection-middle)/width
+        return deviation
+
+
+
