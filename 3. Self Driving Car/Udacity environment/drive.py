@@ -11,6 +11,7 @@ import eventlet.wsgi
 from PIL import Image
 from flask import Flask
 from io import BytesIO
+from preprocessing import *
 
 # from keras.models import load_model
 # import h5py
@@ -20,6 +21,8 @@ sio = socketio.Server()
 app = Flask(__name__)
 model = None
 prev_image_array = None
+
+import cv2
 
 
 class SimplePIController:
@@ -61,14 +64,31 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = np.asarray(image)
+
+        img = CameraImage(image)
+        steering_angle = img.act() / 2
+
+        img_detected = to_black_and_white(img.original_array)
+        img_detected = detect_edges(img_detected,300,600)
+        # cv2.imshow("window",img.array)
+
+            # screen =  np.array(ImageGrab.grab(bbox=(0,40,800,640)))
+            # #print('Frame took {} seconds'.format(time.time()-last_time))
+            # last_time = time.time()
+            # new_screen = process_img(screen)
+        cv2.imshow('window', img.array)
+        cv2.imshow('edges',img_detected)
+            #cv2.imshow('window',cv2.cvtColor(screen, cv2.COLOR_BGR2RGB))
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+        # image_array = np.asarray(image)
         # steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
-        image.save("image_{}.png".format(np.random.randint(1,10000)))
+        # image.save("image_{}.png".format(np.random.randint(1,10000)))
 
-        throttle = controller.update(float(speed))
+        # speed = float(speed) * 2 if np.abs(steering_angle) > 10 else float(speed)
+        # throttle = controller.update(float(speed))
+        throttle = controller.update(float(speed)) if np.abs(steering_angle) > 10 else controller.update(float(speed)) * 1.5
 
-
-        steering_angle = np.random.randint(-45,45)
 
         print(steering_angle, throttle,"- speed :",speed)
         send_control(steering_angle, throttle)

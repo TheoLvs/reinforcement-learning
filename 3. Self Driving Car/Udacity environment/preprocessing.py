@@ -185,6 +185,7 @@ class CameraImage(object):
         middle = np.int32(width/2)
         intersection = intersection_lines(left,right,width = width)
         deviation = (intersection-middle)/width
+        deviation = np.int32(deviation*25)
         return deviation
 
 
