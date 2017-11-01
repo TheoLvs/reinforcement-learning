@@ -1,3 +1,0 @@
-python drive.py
-
-pause
