@@ -105,3 +105,4 @@
 - [Optimizing Long Short-Term Memory Recurrent Neural Networks UsingAnt Colony Optimization to Predict Turbine Engine Vibration](https://arxiv.org/pdf/1710.03753.pdf)
 - [Continuous Adaptation via Meta-Learning in Nonstationary and Competitive Environments](https://arxiv.org/pdf/1710.03641.pdf)
 - [Emergent Complexity via Multi-Agent Competition](https://arxiv.org/pdf/1710.03748.pdf)
+- [A Unified Game-Theoretic Approach to Multiagent Reinforcement Learning](https://arxiv.org/pdf/1711.00832.pdf)
