@@ -38,11 +38,15 @@ from rl.agents.base_agent import Agent
 
 
 class DQNAgent(Agent):
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.995,gamma = 0.95,lr = 0.001):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.995,gamma = 0.95,lr = 0.001,low = 0,high = 1,action_type = "discrete"):
+        assert action_type in ["discrete","continuous"]
         self.states_size = states_size
         self.actions_size = actions_size
         self.memory = Memory()
         self.epsilon = epsilon
+        self.low = low
+        self.high = high
+        self.action_type = action_type
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.gamma = gamma
@@ -100,13 +104,20 @@ class DQNAgent(Agent):
     def act(self,state):
         state = self.expand_state_vector(state)
 
-        q = self.model.predict(state)
 
         if np.random.rand() > self.epsilon:
-            a = np.argmax(q[0])
-        else:
-            a = np.random.randint(self.actions_size)
+            q = self.model.predict(state)
 
+            if self.action_type == "discrete":
+                a = np.argmax(q[0])
+            elif self.action_type == "continuous":
+                a = np.squeeze(np.clip(q,self.low,self.high))
+
+        else:
+            if self.action_type == "discrete":
+                a = np.random.randint(self.actions_size)
+            elif self.action_type == "continuous":
+                a = np.random.uniform(self.low,self.high,self.actions_size)
         return a 
 
 
