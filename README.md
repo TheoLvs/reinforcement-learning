@@ -41,6 +41,7 @@
 - [Optimize a quadratic function with ES](https://gist.github.com/karpathy/77fbb6a8dac5395f1b73e7a89300318d) - Andrej Karpathy
 - [Evolution modelling with creatures](https://www.youtube.com/watch?v=GOFws_hhZs8)
 - [Genetic biwalkers](http://rednuht.org/genetic_walkers/)
+- [Evolving stable strategies](http://blog.otoro.net/2017/11/12/evolving-stable-strategies/)
 
 ##### Actor Critic, A2C, ACKTR
 - [A3C tutorial tutorial by Arthur Juliani](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-8-asynchronous-actor-critic-agents-a3c-c88f72a5e9f2)
@@ -48,7 +49,7 @@
 - [A3C explananations and implementations](https://mpatacchiola.github.io/blog/2017/02/11/dissecting-reinforcement-learning-4.html)
 - [ACKTR & A2C](https://blog.openai.com/baselines-acktr-a2c) - by OpenAI
 - [ACKTR & A3C implementation in PyTorch](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr)
-
+- [Actor Critic model with Keras](https://towardsdatascience.com/reinforcement-learning-w-keras-openai-actor-critic-models-f084612cfd69)
 
 
 ##### PPO, TRPO
