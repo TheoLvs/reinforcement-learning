@@ -54,7 +54,7 @@ import pybullet_envs.bullet.minitaur_gym_env as e
 
 
 N_EPISODES = 1000
-MAX_STEPS = 1000
+MAX_STEPS = 2000
 RENDER = True
 RENDER_EVERY = 50
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     action_size = env.action_space.shape[0]
 
     # Create the RL Agent
-    agent = DQNAgent(state_size,action_size)
+    agent = DQNAgent(state_size,action_size,low = -1,high = 1,action_type="continuous")
 
     # Initialize a list to store the rewards
     rewards = []
@@ -91,6 +91,7 @@ if __name__ == "__main__":
 
         # Reset the environment
         s = env.reset()
+        reward = 0
 
 
         #-----------------------------------------
@@ -105,9 +106,7 @@ if __name__ == "__main__":
             
             # Take the action, get the reward from environment and go to the next state
             s_next,r,done,info = env.step(a)
-
-            # Tweaking the reward to make it negative when we lose
-            r = r if not done else -10
+            reward += r
 
             # Remember the important variables
             agent.remember(s,a,r,s_next,done)
@@ -117,7 +116,7 @@ if __name__ == "__main__":
             
             # If the episode is terminated
             if done:
-                print("Episode {}/{} finished after {} timesteps - epsilon : {:.2}".format(i_episode+1,N_EPISODES,i_step,agent.epsilon))
+                print("Episode {}/{} finished after {} timesteps - epsilon : {:.2} - reward : {:.2}".format(i_episode+1,N_EPISODES,i_step,agent.epsilon,reward))
                 break
 
 
@@ -128,7 +127,7 @@ if __name__ == "__main__":
 
 
         # Training
-        agent.train()
+        agent.train(batch_size = 128)
 
 
 
