@@ -75,6 +75,7 @@
 ##### Environment
 - [Unity Agents](https://blogs.unity3d.com/2017/09/19/introducing-unity-machine-learning-agents/)
 - [SerpentAI](https://github.com/SerpentAI/SerpentAI)
+- [Pybullet](https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit)
 
 ***
 ### Papers
