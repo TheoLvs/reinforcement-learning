@@ -50,7 +50,7 @@
 - [ACKTR & A2C](https://blog.openai.com/baselines-acktr-a2c) - by OpenAI
 - [ACKTR & A3C implementation in PyTorch](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr)
 - [Actor Critic model with Keras](https://towardsdatascience.com/reinforcement-learning-w-keras-openai-actor-critic-models-f084612cfd69)
-
+- [Car Racing solving with A3C](https://fr.scribd.com/document/358019044/Reinforcement-Car-Racing-with-A3C) and [this solution as well](https://web.stanford.edu/class/cs221/2017/restricted/p-final/elibol/final.pdf)
 
 ##### PPO, TRPO
 - [Proximal Policy Optimization](https://blog.openai.com/openai-baselines-ppo/) - by OpenAI
