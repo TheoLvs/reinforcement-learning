@@ -7,7 +7,9 @@
 - Solving OpenAI Gym environments (2017)
 - Developing an multi agent Tic Tac Toe environment and solving it with Policy Gradients (May 2017)
 - Using RL to automatically adapt the cooling in a Data Center (August 2017)
-  
+- Controlling Robots via Reinforcement Learning (November 2017)
+- Playing and solving the Chrome Dinosaur Game with Evolution Strategies and PyTorch (January 2018)  
+
 
 
 ***
