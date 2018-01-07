@@ -26,6 +26,14 @@ import torch
 
 
 
+
+
+#=================================================================================================================================
+# GAME
+#=================================================================================================================================
+
+
+
 class DinoGame(object):
     def __init__(self):
         pass
@@ -142,6 +150,14 @@ class DinoGame(object):
 
 
 
+    def run_generation(self):
+        pass
+
+
+
+    def run_game(self):
+        pass
+
 
 
     #--------------------------------------------------------------------
@@ -164,6 +180,110 @@ class DinoGame(object):
         else:
             pass
 
+
+
+
+
+
+#=================================================================================================================================
+# ELEMENT
+#=================================================================================================================================
+
+
+class Dino(object):
+    def __init__(self):
+        self.score = None
+
+    def __add__(self):
+        pass
+
+
+    def mutate(self):
+        pass
+
+
+    def evaluate(self):
+        return self.score
+
+
+    def set_score(self,score):
+        self.score = score
+
+
+
+
+
+
+
+
+#=================================================================================================================================
+# POPULATION
+#=================================================================================================================================
+
+
+class Population(object):
+    def __init__(self,dinos = None,n = 20):
+
+        if dinos is None:
+            self.dinos = [Dino() for i in range(n)]
+        else:
+            self.dinos = dinos
+
+
+    def __getitem__(self,key):
+        if type(key) == tuple or type(key) == list:
+            d = []
+            for i in key:
+                d.append(self.dinos[i])
+            return d
+        else:
+            return self.dinos[key]
+    
+    def __iter__(self):
+        return iter(self.dinos)
+    
+    def __len__(self):
+        return len(self.dinos)
+
+
+
+    def evaluate(self):
+        fitnesses = [(i,dist.evaluate()) for i,dist in enumerate(self)]
+        indices,fitnesses = zip(*sorted(fitnesses,key = lambda x : x[1],reverse = True))
+        return indices,fitnesses
+
+
+
+    def selection(self,top = 0.5):
+        indices,fitnesses = self.evaluate()
+        n = int(top*len(fitnesses))
+        return indices[:n]
+
+
+    def crossover(self):
+        pass
+
+
+    def mutate(self):
+        for d in self:
+            d.mutate()
+
+
+    def evolve(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+#=================================================================================================================================
+# RUN
+#=================================================================================================================================
 
 
 
