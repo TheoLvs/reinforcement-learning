@@ -21,6 +21,7 @@ import pyautogui
 import random
 import cv2
 from PIL import Image,ImageGrab
+from collections import deque
 
 import torch
 from torch.autograd import Variable
@@ -38,7 +39,7 @@ import torch.nn.functional as F
 
 class DinoGame(object):
     def __init__(self):
-        pass
+        self.memory_xs = deque(maxlen = 2000)
 
     #--------------------------------------------------------------------
     # HELPER FUNCTIONS
@@ -114,7 +115,7 @@ class DinoGame(object):
     # RUN THE GAME
 
 
-    def run_episode(self,render = None,policy = None,**kwargs):
+    def run_episode(self,render = None,policy = None,dino = None,**kwargs):
 
         # Episode initialization
         roi_array = np.zeros_like(np.array(self.grab_roi()))
@@ -133,7 +134,7 @@ class DinoGame(object):
             score = (time.time() - t)*10
 
             # Action
-            self.act(imgs,xs,score,policy,**kwargs)
+            self.act(imgs,xs,score,policy,dino,**kwargs)
 
             # Rendering
             if render is not None and render in imgs:
@@ -166,8 +167,27 @@ class DinoGame(object):
     # ACTIONS
 
 
-    def act(self,imgs,xs,score,policy = None,**kwargs):
-        
+
+    def prepare_xs(self,xs,pixels_blur = 1):
+        x = np.zeros(700)
+
+        if len(xs) > 0:
+            for i in xs:
+                i = max(i - 100,0)
+                x[max(i-pixels_blur,0):i+pixels_blur+1] = 1
+
+
+        x = Variable(torch.FloatTensor(x))
+
+        return x
+
+
+
+
+
+
+    def act(self,imgs,xs,score,policy = None,dino = None,**kwargs):
+
 
         if policy == "random":
             action = random.choice(["up","down",None])
@@ -179,6 +199,14 @@ class DinoGame(object):
             if len(xs) > 0 and xs[0] < th:
                 self.move("up")
 
+        elif dino is not None:
+            if dino.method == "flat700":
+                xs = self.prepare_xs(xs)
+                action = dino.act(xs)
+                self.move(action)
+
+
+
         else:
             pass
 
@@ -188,16 +216,34 @@ class DinoGame(object):
 
 
 #=================================================================================================================================
-# ELEMENT
+# AGENT
 #=================================================================================================================================
 
 
 class Dino(object):
-    def __init__(self):
+    def __init__(self,method = "flat700",net = None,**kwargs):
         self.score = None
+        self.method = method
+        self.create_net(net)
 
-    def __add__(self):
-        pass
+    def __add__(self,other):
+        new_net = self.net + other.net
+        return Dino(method = self.method,net = new_net)
+
+
+    def create_net(self,net = None):
+        if net is not None:
+            self.net = net
+
+        elif self.method == "flat700":
+            self.net = Net(700,100,3)
+        else:
+            self.net = None
+
+    def act(self,x):
+        probas = self.net.forward(x)
+        action = np.argmax(probas.data.numpy())
+        return ["up","down",None][action]
 
 
     def mutate(self):
@@ -284,38 +330,25 @@ class Population(object):
 
 
 
-class Net(nn.Module):
-
-    def __init__(self):
+class Net(torch.nn.Module):
+    def __init__(self, n_feature, n_hidden, n_output):
+        self.args = n_feature,n_hidden,n_output
         super(Net, self).__init__()
-        # 1 input image channel, 6 output channels, 5x5 square convolution
-        # kernel
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.hidden = torch.nn.Linear(n_feature, n_hidden)   # hidden layer
+        self.out = torch.nn.Linear(n_hidden, n_output)   # output layer
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        # If the size is a square you can only specify a single number
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = x.view(-1, self.num_flat_features(x))
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.hidden(x))      # activation function for hidden layer
+        x = F.softmax(self.out(x))
         return x
 
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
 
+    def __add__(self,other):
 
+        new = Net(*self.args)
+        new.hidden.weight.data = torch.FloatTensor(0.5 * (self.hidden.weight.data.numpy() + other.hidden.weight.data.numpy()))
+        new.out.weight.data = torch.FloatTensor(0.5 * (self.out.weight.data.numpy() + other.out.weight.data.numpy()))
+        return new
 
 
 
