@@ -29,7 +29,8 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 
 #=================================================================================================================================
@@ -39,14 +40,19 @@ import torch.nn.functional as F
 
 
 class DinoGame(object):
-    def __init__(self):
-        self.memory_xs = deque(maxlen = 2000)
+    def __init__(self,driver_path = "C:/git/chromedriver.exe",selenium = True):
+        self.selenium = selenium
+        if self.selenium:
+            self.driver = webdriver.Chrome(driver_path)
+            self.driver.get("https://chromedino.com/")
+            self.body = self.driver.find_element_by_css_selector("body")
 
     #--------------------------------------------------------------------
     # HELPER FUNCTIONS
 
     def click_screen(self):
-        pyautogui.click(x=1000,y = 500)
+        if not self.selenium:
+            pyautogui.click(x=1000,y = 500)
 
 
     def refresh_page(self):
@@ -56,7 +62,13 @@ class DinoGame(object):
 
     def move(self,action = "up"):
         if action is not None:
-            pyautogui.press(action)
+            if self.selenium:
+                if action == "up":
+                    self.body.send_keys(Keys.ARROW_UP)
+                else:
+                    self.body.send_keys(Keys.ARROW_DOWN)
+            else:
+                pyautogui.press(action)
 
 
     #--------------------------------------------------------------------
@@ -122,10 +134,12 @@ class DinoGame(object):
         roi_array = np.zeros_like(np.array(self.grab_roi()))
         self.click_screen()
         time.sleep(1)
-        pyautogui.press("up")
-        pyautogui.press("up")
-        pyautogui.press("up")
-        pyautogui.press("up")
+        self.move("up")
+        if not self.selenium:
+            pyautogui.press("up")
+            pyautogui.press("up")
+            pyautogui.press("up")
+
         t = time.time()
 
         # Episode main loop
@@ -165,18 +179,18 @@ class DinoGame(object):
             dino.set_score(score)
             scores.append(score)
 
-        print("Generation {} : mean {} - std {}".format(n_generation,np.mean(scores),np.std(scores)))
+        print("Generation {} : mean {} - std {}".format(n_generation,int(np.mean(scores)),int(np.std(scores))))
         population.evolve()
         return scores,population
 
 
 
-    def run_game(self,n = 20,n_generations = 100,top = 0.25):
+    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None):
 
         population = Population(n = n)
         all_scores = []
         for i in range(n_generations):
-            scores,population = self.run_generation(population,n_generation = i)
+            scores,population = self.run_generation(population,n_generation = i,render = render)
             all_scores.append(scores)
         
         return all_scores,population
