@@ -152,10 +152,12 @@ class DinoGame(object):
             score = (time.time() - t)*10
 
             # Action
-            self.act(imgs,xs,score,policy,dino,**kwargs)
+            probas = self.act(imgs,xs,score,policy,dino,**kwargs)
+            probas = "" if probas is None else str(round(probas,2))
 
             # Rendering
             if render is not None and render in imgs:
+                cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
                 cv2.imshow(render,imgs[render])
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -185,9 +187,9 @@ class DinoGame(object):
 
 
 
-    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None):
+    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None,method = "flat700nn"):
 
-        population = Population(n = n)
+        population = Population(n = n,method = method)
         all_scores = []
         for i in range(n_generations):
             scores,population = self.run_generation(population,n_generation = i,render = render)
@@ -234,10 +236,11 @@ class DinoGame(object):
                 self.move("up")
 
         elif dino is not None:
-            if dino.method == "flat700":
+            if "flat700" in dino.method:
                 xs = self.prepare_xs(xs)
-                action = dino.act(xs)
+                action,probas = dino.act(xs)
                 self.move(action)
+                return probas
 
 
 
@@ -255,7 +258,7 @@ class DinoGame(object):
 
 
 class Dino(object):
-    def __init__(self,method = "flat700",net = None,**kwargs):
+    def __init__(self,method = "flat700nn",net = None,**kwargs):
         self.score = None
         self.method = method
         self.create_net(net)
@@ -269,15 +272,24 @@ class Dino(object):
         if net is not None:
             self.net = net
 
-        elif self.method == "flat700":
+        elif self.method == "flat700nn":
             self.net = Net(700,100,2)
+        elif self.method == "flat700lr":
+            self.net = LogReg(700,1)
         else:
             self.net = None
 
     def act(self,x):
         probas = self.net.forward(x)
-        action = np.argmax(probas.data.numpy())
-        return ["up",None][action]
+        if self.method == "flat700nn":
+            action = np.argmax(probas.data.numpy())
+            return ["up",None][action],probas
+        elif self.method == "flat700lr":
+            proba_up = probas.data.numpy()[0]
+            if proba_up > 0.5:
+                return "up",proba_up
+            else:
+                return None,proba_up
 
 
     def mutate(self):
@@ -304,10 +316,12 @@ class Dino(object):
 
 
 class Population(object):
-    def __init__(self,dinos = None,n = 20):
+    def __init__(self,dinos = None,n = 20,method = "flat700nn"):
+
+        self.method = method
 
         if dinos is None:
-            self.dinos = [Dino() for i in range(n)]
+            self.dinos = [Dino(method = method) for i in range(n)]
         else:
             self.dinos = dinos
 
@@ -352,7 +366,7 @@ class Population(object):
             new_population.append(self[i]+self[j])
 
         if len(new_population) < len(self):
-            new_population.extend([Dino() for i in range(len(self)-len(new_population))])
+            new_population.extend([Dino(method = self.method) for i in range(len(self)-len(new_population))])
         self.dinos = new_population
 
 
@@ -408,6 +422,43 @@ class Net(torch.nn.Module):
         self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
 
 
+
+
+class LogReg(torch.nn.Module):
+    def __init__(self, n_feature,n_output = 1):
+        self.args = n_feature,n_output
+        super(LogReg, self).__init__()
+        self.out = torch.nn.Linear(n_feature,n_output,bias = False)   # output layer
+
+    def forward(self, x):
+        x = F.sigmoid(self.out(x))
+        return x
+
+
+    def __add__(self,other):
+
+        new = LogReg(*self.args)
+        new.out.weight.data = torch.FloatTensor(0.5 * (self.out.weight.data.numpy() + other.out.weight.data.numpy()))
+        return new
+
+
+    def mutate(self):
+        out = self.out.weight.data.numpy()
+        noise_out = 10e-3 * np.random.randn(*out.shape)
+        self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
+
+    def plot_coefs(self):
+        plt.figure(figsize = (15,4))
+        plt.title("Coefficients")
+        plt.axhline(0,c = "black")
+        plt.plot(self.out.weight.data.numpy()[0])
+        plt.xlabel("# Pixel")
+        plt.show()
+
+
+
+
+
 #=================================================================================================================================
 # RUN
 #=================================================================================================================================
@@ -418,4 +469,4 @@ class Net(torch.nn.Module):
 if __name__ == "__main__":
 
     game = DinoGame()
-    game.run_game()
+    game.run_episode(render = "contours")
