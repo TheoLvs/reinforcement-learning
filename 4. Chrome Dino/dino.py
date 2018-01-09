@@ -181,7 +181,7 @@ class DinoGame(object):
             dino.set_score(score)
             scores.append(score)
 
-        print("Generation {} : mean {} - std {}".format(n_generation,int(np.mean(scores)),int(np.std(scores))))
+        print("Generation {} : mean {} - std {} - max {} - min {}".format(n_generation,int(np.mean(scores)),int(np.std(scores)),int(np.max(scores)),int(np.min(scores))))
         population.evolve()
         return scores,population
 
@@ -444,7 +444,7 @@ class LogReg(torch.nn.Module):
 
     def mutate(self):
         out = self.out.weight.data.numpy()
-        noise_out = 10e-3 * np.random.randn(*out.shape)
+        noise_out = 10e-2 * np.random.randn(*out.shape)
         self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
 
     def plot_coefs(self):
