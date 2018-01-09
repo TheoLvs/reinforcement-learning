@@ -22,6 +22,7 @@ import random
 import cv2
 from PIL import Image,ImageGrab
 from collections import deque
+import itertools
 
 import torch
 from torch.autograd import Variable
@@ -120,7 +121,10 @@ class DinoGame(object):
         # Episode initialization
         roi_array = np.zeros_like(np.array(self.grab_roi()))
         self.click_screen()
-        time.sleep(0.1)
+        time.sleep(1)
+        pyautogui.press("up")
+        pyautogui.press("up")
+        pyautogui.press("up")
         pyautogui.press("up")
         t = time.time()
 
@@ -153,13 +157,29 @@ class DinoGame(object):
 
 
 
-    def run_generation(self):
-        pass
+    def run_generation(self,population,n_generation = 1,**kwargs):
+        
+        scores = []
+        for dino in tqdm(population):
+            score = self.run_episode(dino = dino,**kwargs)
+            dino.set_score(score)
+            scores.append(score)
+
+        print("Generation {} : mean {} - std {}".format(n_generation,np.mean(scores),np.std(scores)))
+        population.evolve()
+        return scores,population
 
 
 
-    def run_game(self):
-        pass
+    def run_game(self,n = 20,n_generations = 100,top = 0.25):
+
+        population = Population(n = n)
+        all_scores = []
+        for i in range(n_generations):
+            scores,population = self.run_generation(population,n_generation = i)
+            all_scores.append(scores)
+        
+        return all_scores,population
 
 
 
@@ -308,8 +328,19 @@ class Population(object):
         return indices[:n]
 
 
-    def crossover(self):
-        pass
+
+    def crossover(self,indices):
+        combinations = list(itertools.combinations(indices,2))
+        np.random.shuffle(combinations)
+        combinations = combinations[:len(self)]
+        new_population = []
+        for i,j in combinations:
+            new_population.append(self[i]+self[j])
+
+        if len(new_population) < len(self):
+            new_population.extend([Dino() for i in range(len(self)-len(new_population))])
+        self.dinos = new_population
+
 
 
     def mutate(self):
@@ -317,8 +348,11 @@ class Population(object):
             d.mutate()
 
 
-    def evolve(self):
-        pass
+    def evolve(self,top = 0.25):
+        indices = self.selection(top = top)
+        self.crossover(indices)
+        self.mutate()
+        
 
 
 
@@ -362,4 +396,4 @@ class Net(torch.nn.Module):
 if __name__ == "__main__":
 
     game = DinoGame()
-    game.run_episode(render = "contours",policy  = "rules",th = 280)
+    game.run_game()
