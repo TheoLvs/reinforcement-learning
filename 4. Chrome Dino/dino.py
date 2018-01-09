@@ -256,18 +256,18 @@ class Dino(object):
             self.net = net
 
         elif self.method == "flat700":
-            self.net = Net(700,100,3)
+            self.net = Net(700,100,2)
         else:
             self.net = None
 
     def act(self,x):
         probas = self.net.forward(x)
         action = np.argmax(probas.data.numpy())
-        return ["up","down",None][action]
+        return ["up",None][action]
 
 
     def mutate(self):
-        pass
+        self.net.mutate()
 
 
     def evaluate(self):
@@ -384,6 +384,14 @@ class Net(torch.nn.Module):
         new.out.weight.data = torch.FloatTensor(0.5 * (self.out.weight.data.numpy() + other.out.weight.data.numpy()))
         return new
 
+
+    def mutate(self):
+        hidden = self.hidden.weight.data.numpy()
+        out = self.out.weight.data.numpy()
+        noise_hidden = 10e-2 * np.random.randn(*hidden.shape)
+        noise_out = 10e-2 * np.random.randn(*out.shape)
+        self.hidden.weight.data = torch.FloatTensor(self.hidden.weight.data.numpy() + noise_hidden)
+        self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
 
 
 #=================================================================================================================================
