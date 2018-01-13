@@ -3,7 +3,7 @@
 
 
 """--------------------------------------------------------------------
-NORMAL DISTRIBUTIONS
+GENETIC ALGORITHMS EXPERIMENTS
 Started on the 2018/01/03
 theo.alves.da.costa@gmail.com
 https://github.com/theolvs
@@ -19,6 +19,16 @@ import numpy as np
 import sys
 import time
 from tqdm import tqdm
+
+
+
+
+
+#=============================================================================================================================
+# DISTRIBUTIONS
+#=============================================================================================================================
+
+
 
 
 
@@ -156,3 +166,125 @@ class Population(object):
         plt.ylabel('Fitness')
         plt.legend()
         plt.show()
+
+
+
+
+
+#=============================================================================================================================
+# LOGREG
+#=============================================================================================================================
+
+
+
+import torch
+from torch.autograd import Variable
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+
+
+class LogReg(torch.nn.Module):
+    def __init__(self, n_feature,n_output = 1):
+        self.args = n_feature,n_output
+        super(LogReg, self).__init__()
+        self.out = torch.nn.Linear(n_feature,n_output,bias = False)   # output layer
+
+    def forward(self, x):
+        x = F.sigmoid(self.out(x))
+        return x
+
+
+    def __add__(self,other):
+        new = LogReg(*self.args)
+        new.out.weight.data = torch.FloatTensor(0.5 * (self.out.weight.data.numpy() + other.out.weight.data.numpy()))
+        return new
+
+
+    def mutate(self):
+        out = self.out.weight.data.numpy()
+        noise_out = 10e-2 * np.random.randn(*out.shape)
+        self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
+
+    def plot_coefs(self):
+        plt.figure(figsize = (15,4))
+        plt.title("Coefficients")
+        plt.axhline(0,c = "black")
+        plt.plot(self.out.weight.data.numpy()[0])
+        plt.xlabel("# Pixel")
+        plt.show()
+
+
+
+
+
+
+
+
+class PopulationLogReg(object):
+    def __init__(self,regs = None,n = 20,**kwargs):
+
+        self.kwargs = kwargs
+
+        if regs is None:
+            self.regs = [LogReg(**kwargs) for i in range(n)]
+        else:
+            self.regs = regs
+
+
+    def __getitem__(self,key):
+        if type(key) == tuple or type(key) == list:
+            d = []
+            for i in key:
+                d.append(self.regs[i])
+            return d
+        else:
+            return self.regs[key]
+    
+    def __iter__(self):
+        return iter(self.regs)
+    
+    def __len__(self):
+        return len(self.regs)
+
+
+
+    def evaluate(self):
+        fitnesses = [(i,element.evaluate()) for i,element in enumerate(self)]
+        indices,fitnesses = zip(*sorted(fitnesses,key = lambda x : x[1],reverse = True))
+        return indices,fitnesses
+
+
+
+    def selection(self,top = 0.5):
+        indices,fitnesses = self.evaluate()
+        n = int(top*len(fitnesses))
+        return indices[:n]
+
+
+
+    def crossover(self,indices):
+        combinations = list(itertools.combinations(indices,2))
+        np.random.shuffle(combinations)
+        combinations = combinations[:len(self)]
+        new_population = []
+        for i,j in combinations:
+            new_population.append(self[i]+self[j])
+
+        if len(new_population) < len(self):
+            new_population.extend([LogReg(**self.kwargs) for i in range(len(self)-len(new_population))])
+        self.regs = new_population
+
+
+
+    def mutate(self):
+        for d in self:
+            d.mutate()
+
+
+    def evolve(self,top = 0.25):
+        indices = self.selection(top = top)
+        self.crossover(indices)
+        self.mutate()
+        
