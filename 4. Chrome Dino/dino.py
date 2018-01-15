@@ -23,6 +23,8 @@ import cv2
 from PIL import Image,ImageGrab
 from collections import deque
 import itertools
+from io import BytesIO
+
 
 import torch
 from torch.autograd import Variable
@@ -44,7 +46,7 @@ class DinoGame(object):
         self.selenium = selenium
         if self.selenium:
             self.driver = webdriver.Chrome(driver_path)
-            self.driver.get("https://chromedino.com/")
+            self.driver.get("chrome://dino")
             self.body = self.driver.find_element_by_css_selector("body")
 
     #--------------------------------------------------------------------
@@ -76,7 +78,10 @@ class DinoGame(object):
 
 
     def grab_roi(self):
-        return ImageGrab.grab(bbox=(1020,350,1850,600))
+        # return ImageGrab.grab(bbox=(1020,350,1850,600)) # old version
+        roi = Image.open(BytesIO(self.driver.get_screenshot_as_png()))
+        roi = roi.resize((640,305))
+        return roi
 
 
     def grab_game(self,how = "all"):
@@ -118,7 +123,7 @@ class DinoGame(object):
 
     def _extract_game(self,img):
         mask = np.zeros_like(img)
-        mask[80:220,130:800] = 255
+        mask[80:220,80:800] = 255
         masked = cv2.bitwise_and(img,mask)
         return masked
 
@@ -144,28 +149,29 @@ class DinoGame(object):
 
         # Episode main loop
         while True:
+            print('ello')
 
-            # Data acquisition
-            imgs,xs = self.grab_game()
+            # # Data acquisition
+            # imgs,xs = self.grab_game()
 
-            # Score
-            score = (time.time() - t)*10
+            # # Score
+            # score = (time.time() - t)*10
 
-            # Action
-            probas = self.act(imgs,xs,score,policy,dino,**kwargs)
-            probas = "" if probas is None else str(round(probas,2))
+            # # Action
+            # probas = self.act(imgs,xs,score,policy,dino,**kwargs)
+            # probas = "" if probas is None else str(round(probas,2))
 
-            # Rendering
-            if render is not None and render in imgs:
-                cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
-                cv2.imshow(render,imgs[render])
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+            # # Rendering
+            # if render is not None and render in imgs:
+            #     cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+            #     cv2.imshow(render,imgs[render])
+            #     if cv2.waitKey(1) & 0xFF == ord('q'):
+            #         break
 
-            # Condition of stop
-            if score > 20 and (imgs["raw"] == roi_array).all():
-                break
-            roi_array = imgs["raw"]
+            # # Condition of stop
+            # if score > 20 and (imgs["raw"] == roi_array).all():
+            #     break
+            # roi_array = imgs["raw"]
 
         # Score
         score = (time.time() - t)*10
@@ -230,6 +236,7 @@ class DinoGame(object):
             self.move(action)
 
         elif policy == "rules":
+            print(xs)
             th = 300 if "th" not in kwargs else kwargs["th"]
             th = max(th - score/100,150)
             if len(xs) > 0 and xs[0] < th:
