@@ -443,15 +443,15 @@ class LogReg(torch.nn.Module):
         return new
 
 
-    def mutate(self,method = "gaussian",**kwargs):
+    def mutate(self,method = "local",**kwargs):
         out = self.out.weight.data.numpy()
         if method == "gaussian":
             noise_out = 1 * np.random.randn(*out.shape)
         elif method == "local":
             p = 0.1
             impact = 0.1
-            noise_out = stats.bernoulli.rvs(size = *out.shape,p = p)
-            noise_out *= stats.uniform.rvs(size = *out.shape,loc = -impact,scale = 2*impact)
+            noise_out = stats.bernoulli.rvs(size = out.shape,p = p).astype(float)
+            noise_out *= stats.uniform.rvs(size = out.shape,loc = -impact,scale = 2*impact)
             noise_out *= out
 
         self.out.weight.data = torch.FloatTensor(out + noise_out)
