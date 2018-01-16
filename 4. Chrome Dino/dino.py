@@ -23,6 +23,7 @@ import cv2
 from PIL import Image,ImageGrab
 from collections import deque
 import itertools
+from scipy import stats
 
 import torch
 from torch.autograd import Variable
@@ -442,10 +443,18 @@ class LogReg(torch.nn.Module):
         return new
 
 
-    def mutate(self):
+    def mutate(self,method = "gaussian",**kwargs):
         out = self.out.weight.data.numpy()
-        noise_out = 1 * np.random.randn(*out.shape)
-        self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
+        if method == "gaussian":
+            noise_out = 1 * np.random.randn(*out.shape)
+        elif method == "local":
+            p = 0.1
+            impact = 0.1
+            noise_out = stats.bernoulli.rvs(size = *out.shape,p = p)
+            noise_out *= stats.uniform.rvs(size = *out.shape,loc = -impact,scale = 2*impact)
+            noise_out *= out
+
+        self.out.weight.data = torch.FloatTensor(out + noise_out)
 
     def plot_coefs(self):
         plt.figure(figsize = (15,4))
