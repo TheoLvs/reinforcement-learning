@@ -188,9 +188,9 @@ class DinoGame(object):
 
 
 
-    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None,method = "flat700nn"):
+    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None,method = "flat700nn",n_obstacles = 2):
 
-        population = Population(n = n,method = method)
+        population = Population(n = n,method = method,n_obstacles = 2)
         all_scores = []
         for i in range(n_generations):
             scores,population = self.run_generation(population,n_generation = i,render = render)
@@ -205,7 +205,7 @@ class DinoGame(object):
 
 
 
-    def prepare_xs(self,xs,pixels_blur = 1):
+    def prepare_xs_vector(self,xs,pixels_blur = 1):
         x = np.zeros(700)
 
         if len(xs) > 0:
@@ -217,6 +217,20 @@ class DinoGame(object):
         x = Variable(torch.FloatTensor(x))
 
         return x
+
+
+
+    def prepare_xs_direct(self,xs,n_obstacles = 2):
+        if len(xs) == 0:
+            xs = [700,700]
+        elif len(xs) == 1:
+            xs = [xs[0],700]
+        else:
+            xs = xs[:n_obstacles]
+        xs = np.divide(np.array(xs),700)
+        xs = np.expand_dims(xs,axis = 1).T
+        xs = Variable(torch.FloatTensor(xs))
+        return xs
 
 
 
@@ -238,10 +252,18 @@ class DinoGame(object):
 
         elif dino is not None:
             if "flat700" in dino.method:
-                xs = self.prepare_xs(xs)
+                xs = self.prepare_xs_vector(xs)
                 action,probas = dino.act(xs)
                 self.move(action)
                 return probas
+            elif "direct" in dino.method:
+                n_obstacles = 2 if "n_obstacles" not in kwargs else kwargs["n_obstacles"]
+                xs = self.prepare_xs_direct(xs,n_obstacles = n_obstacles)
+                action,probas = dino.act(xs)
+                self.move(action)
+                return probas
+                
+
 
 
 
@@ -259,17 +281,18 @@ class DinoGame(object):
 
 
 class Dino(object):
-    def __init__(self,method = "flat700nn",net = None,**kwargs):
+    def __init__(self,method = "flat700nn",net = None,n_obstacles = 2,**kwargs):
         self.score = None
         self.method = method
-        self.create_net(net)
+        self.n_obstacles = n_obstacles
+        self.create_net(net,n_obstacles = n_obstacles)
 
     def __add__(self,other):
         new_net = self.net + other.net
-        return Dino(method = self.method,net = new_net)
+        return Dino(method = self.method,net = new_net,n_obstacles = self.n_obstacles)
 
 
-    def create_net(self,net = None):
+    def create_net(self,net = None,n_obstacles = 2):
         if net is not None:
             self.net = net
 
@@ -277,6 +300,8 @@ class Dino(object):
             self.net = Net(700,100,2)
         elif self.method == "flat700lr":
             self.net = LogReg(700,1)
+        elif self.method == "direct":
+            self.net = Net(n_obstacles,50,1)
         else:
             self.net = None
 
@@ -291,6 +316,16 @@ class Dino(object):
                 return "up",proba_up
             else:
                 return None,proba_up
+
+        elif self.method == "direct":
+            proba_up = probas.data.numpy()[0][0]
+            if proba_up > 0.5:
+                return "up",proba_up
+            else:
+                return None,proba_up
+
+        else:
+            return None,None
 
 
     def mutate(self):
@@ -317,12 +352,13 @@ class Dino(object):
 
 
 class Population(object):
-    def __init__(self,dinos = None,n = 20,method = "flat700nn"):
+    def __init__(self,dinos = None,n = 20,method = "flat700nn",n_obstacles = 2):
 
         self.method = method
+        self.n_obstacles = n_obstacles
 
         if dinos is None:
-            self.dinos = [Dino(method = method) for i in range(n)]
+            self.dinos = [Dino(method = method,n_obstacles = n_obstacles) for i in range(n)]
         else:
             self.dinos = dinos
 
@@ -367,7 +403,7 @@ class Population(object):
             new_population.append(self[i]+self[j])
 
         if len(new_population) < len(self):
-            new_population.extend([Dino(method = self.method) for i in range(len(self)-len(new_population))])
+            new_population.extend([Dino(method = self.method,n_obstacles = self.n_obstacles) for i in range(len(self)-len(new_population))])
         self.dinos = new_population
 
 
@@ -402,7 +438,10 @@ class Net(torch.nn.Module):
 
     def forward(self, x):
         x = F.relu(self.hidden(x))      # activation function for hidden layer
-        x = F.softmax(self.out(x))
+        if self.out.out_features == 1:
+            x = F.sigmoid(self.out(x))
+        else:
+            x = F.softmax(self.out(x))
         return x
 
 
@@ -417,8 +456,8 @@ class Net(torch.nn.Module):
     def mutate(self):
         hidden = self.hidden.weight.data.numpy()
         out = self.out.weight.data.numpy()
-        noise_hidden = 10e-2 * np.random.randn(*hidden.shape)
-        noise_out = 10e-2 * np.random.randn(*out.shape)
+        noise_hidden = 1e-2 * np.random.randn(*hidden.shape)
+        noise_out = 1e-2 * np.random.randn(*out.shape)
         self.hidden.weight.data = torch.FloatTensor(self.hidden.weight.data.numpy() + noise_hidden)
         self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
 
@@ -448,8 +487,8 @@ class LogReg(torch.nn.Module):
         if method == "gaussian":
             noise_out = 1 * np.random.randn(*out.shape)
         elif method == "local":
-            p = 0.1
-            impact = 0.1
+            p = 0.5
+            impact = 0.5
             noise_out = stats.bernoulli.rvs(size = out.shape,p = p).astype(float)
             noise_out *= stats.uniform.rvs(size = out.shape,loc = -impact,scale = 2*impact)
             noise_out *= out

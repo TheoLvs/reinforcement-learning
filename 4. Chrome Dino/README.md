@@ -29,3 +29,11 @@
 ##### Experiments : 
 1. **Genetic algorithm** : Generation of 20 dinos, 5 survive, and make 10 offsprings. 10 random dinos are created to complete the 20 population. Did not work at all after 100 generations, still an average score of 50 which is stopping at the first obstacle. This was tested without mutations. The Neural Network is very shallow MLP with one 100-unit hidden layer. 
 2. **Genetic algorithm** : Generation of 40 dinos, 10 survive, make 45 offsprings, but 40 are selected at random to recreate the 40-population. Added mutations with gaussian noise at this step. Tried as well with a shallow MLP but also with a simple logistic regression in PyTorch
+
+
+
+##### Ideas 
+- Finding parameter on when to jump
+- Logreg/NN on the first and second position of obstacles
+- ML + Heuristics model
+- Bayesian priors
