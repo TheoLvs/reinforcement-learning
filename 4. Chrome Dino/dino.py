@@ -456,7 +456,7 @@ class Net(torch.nn.Module):
     def mutate(self):
         hidden = self.hidden.weight.data.numpy()
         out = self.out.weight.data.numpy()
-        noise_hidden = 1e-2 * np.random.randn(*hidden.shape)
+        noise_hidden = 1 * np.random.randn(*hidden.shape)
         noise_out = 1e-2 * np.random.randn(*out.shape)
         self.hidden.weight.data = torch.FloatTensor(self.hidden.weight.data.numpy() + noise_hidden)
         self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
