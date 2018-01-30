@@ -24,6 +24,7 @@ from PIL import Image,ImageGrab
 from collections import deque
 import itertools
 from scipy import stats
+from copy import deepcopy
 
 import torch
 from torch.autograd import Variable
@@ -175,7 +176,8 @@ class DinoGame(object):
 
 
     def run_generation(self,population,n_generation = 1,**kwargs):
-        
+        """Run a game for one generation
+        """
         scores = []
         for dino in tqdm(population):
             score = self.run_episode(dino = dino,**kwargs)
@@ -188,14 +190,13 @@ class DinoGame(object):
 
 
 
-    def run_game(self,n = 20,n_generations = 100,top = 0.25,render = None,method = "flat700nn",n_obstacles = 2):
-
-        population = Population(n = n,method = method,n_obstacles = 2)
+    def run_game(self,population,n_generations = 50,render = None):
+        """Run a game for multiple generations
+        """
         all_scores = []
         for i in range(n_generations):
             scores,population = self.run_generation(population,n_generation = i,render = render)
             all_scores.append(scores)
-        
         return all_scores,population
 
 
@@ -264,9 +265,6 @@ class DinoGame(object):
                 return probas
                 
 
-
-
-
         else:
             pass
 
@@ -281,10 +279,11 @@ class DinoGame(object):
 
 
 class Dino(object):
-    def __init__(self,method = "flat700nn",net = None,n_obstacles = 2,**kwargs):
+    def __init__(self,method = "direct",net = None,n_obstacles = 2,alpha = 1e-1):
         self.score = None
         self.method = method
         self.n_obstacles = n_obstacles
+        self.alpha = alpha
         self.create_net(net,n_obstacles = n_obstacles)
 
     def __add__(self,other):
@@ -329,7 +328,7 @@ class Dino(object):
 
 
     def mutate(self):
-        self.net.mutate()
+        self.net.mutate(self.alpha)
 
 
     def evaluate(self):
@@ -352,13 +351,22 @@ class Dino(object):
 
 
 class Population(object):
-    def __init__(self,dinos = None,n = 20,method = "flat700nn",n_obstacles = 2):
+    """Population ontology
+    """
 
+    def __init__(self,dinos = None,n = 20,method = "direct",n_obstacles = 2,strategy = "simple_genetic",alpha = 1e-1,top = 0.25):
+        """Initialization
+        """
+
+        assert strategy in ["simple_genetic","simple_es"]
+        self.strategy = strategy
         self.method = method
         self.n_obstacles = n_obstacles
+        self.alpha = alpha
+        self.top = top
 
         if dinos is None:
-            self.dinos = [Dino(method = method,n_obstacles = n_obstacles) for i in range(n)]
+            self.dinos = [Dino(method = method,n_obstacles = n_obstacles,alpha = alpha) for i in range(n)]
         else:
             self.dinos = dinos
 
@@ -381,43 +389,76 @@ class Population(object):
 
 
     def evaluate(self):
+        """Fitness evaluation
+        """
         fitnesses = [(i,dist.evaluate()) for i,dist in enumerate(self)]
         indices,fitnesses = zip(*sorted(fitnesses,key = lambda x : x[1],reverse = True))
         return indices,fitnesses
 
 
 
-    def selection(self,top = 0.5):
+    def selection(self):
+        """Population selection
+        """
         indices,fitnesses = self.evaluate()
-        n = int(top*len(fitnesses))
+        n = int(self.top*len(fitnesses))
         return indices[:n]
 
 
 
     def crossover(self,indices):
-        combinations = list(itertools.combinations(indices,2))
-        np.random.shuffle(combinations)
-        combinations = combinations[:len(self)]
-        new_population = []
-        for i,j in combinations:
-            new_population.append(self[i]+self[j])
+        """ Population crossover
+        """
 
-        if len(new_population) < len(self):
-            new_population.extend([Dino(method = self.method,n_obstacles = self.n_obstacles) for i in range(len(self)-len(new_population))])
-        self.dinos = new_population
+        # Simple genetic algorithm strategy
+        if self.strategy == "simple_genetic":
+            combinations = list(itertools.combinations(indices,2))
+            np.random.shuffle(combinations)
+            combinations = combinations[:len(self)]
+            new_population = []
+            for i,j in combinations:
+                new_population.append(self[i]+self[j])
+
+            if len(new_population) < len(self):
+                new_population.extend([Dino(method = self.method,n_obstacles = self.n_obstacles) for i in range(len(self)-len(new_population))])
+            self.dinos = new_population
+
+
+        # Simple evolution strategy
+        elif self.strategy == "simple_es":
+            selection = self[indices]
+            new_population = []
+            for i in range(len(self)-len(selection)):
+                dino = deepcopy(random.choice(selection))
+                new_population.append(dino)
+            selection.extend(new_population)
+            self.dinos = selection
+
 
 
 
     def mutate(self):
+        """Population mutation
+        """
         for d in self:
             d.mutate()
 
 
-    def evolve(self,top = 0.25):
-        indices = self.selection(top = top)
+
+
+    def evolve(self):
+        """Population evolution
+        """
+        indices = self.selection()
         self.crossover(indices)
         self.mutate()
         
+
+
+
+
+
+
 
 
 
@@ -453,11 +494,17 @@ class Net(torch.nn.Module):
         return new
 
 
-    def mutate(self):
+    def mutate(self,alpha):
+        if type(alpha) == list:
+            alpha_hidden = alpha[0]
+            alpha_out = alpha[1]
+        else:
+            alpha_hidden,alpha_out = alpha,alpha
+
         hidden = self.hidden.weight.data.numpy()
         out = self.out.weight.data.numpy()
-        noise_hidden = 1 * np.random.randn(*hidden.shape)
-        noise_out = 1e-2 * np.random.randn(*out.shape)
+        noise_hidden = alpha_hidden * np.random.randn(*hidden.shape)
+        noise_out = alpha_out * np.random.randn(*out.shape)
         self.hidden.weight.data = torch.FloatTensor(self.hidden.weight.data.numpy() + noise_hidden)
         self.out.weight.data = torch.FloatTensor(self.out.weight.data.numpy() + noise_out)
 
