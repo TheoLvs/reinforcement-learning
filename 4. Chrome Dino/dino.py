@@ -181,12 +181,27 @@ class DinoGame(object):
 
             # Action
             probas = self.act(imgs,xs,score,policy,dino,**kwargs)
-            probas = "" if probas is None else str(round(probas,2))
+            if probas is not None:
+                color_probas = (0,255,0) if probas > 0.5 else (0,0,255)
+                probas = str(round(probas,2))
+
+            # Scores
+            if dino is not None:
+                score = (time.time() - t)*10
+                dino.set_score(score)
+                dino.set_count_obstacles(count_obstacles)
+                count_moves = str(dino.count_moves)
+                real_score = str(int(dino.evaluate()))
 
             # Rendering
             if render is not None and render in imgs:
-                cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
-                cv2.putText(imgs[render],str(count_obstacles),(150,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+                if probas is not None:
+                    cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,color_probas,2,cv2.LINE_AA)
+                cv2.putText(imgs[render],str(count_obstacles),(200,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+                if dino is not None:
+                    cv2.putText(imgs[render],str(count_moves),(370,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+                    cv2.putText(imgs[render],str(real_score),(540,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+
                 cv2.imshow(render,imgs[render])
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -198,6 +213,8 @@ class DinoGame(object):
 
         # Score
         score = (time.time() - t)*10
+        if dino is not None:
+            dino.reset()
         return score,count_obstacles
 
 
@@ -327,8 +344,7 @@ class Dino(object):
     def __init__(self,method = "direct",net = None,n_obstacles = 2,alpha = 1e-1):
         """Initialization
         """
-        self.score = None
-        self.reset_counters()
+        self.reset()
         self.method = method
         self.n_obstacles = n_obstacles
         self.alpha = alpha
@@ -359,12 +375,15 @@ class Dino(object):
             self.net = None
 
 
+
+
     #------------------------------------------------------------------------------------
     # COUNTERS
 
-    def reset_counters(self):
+    def reset(self):
         """Reset all the counter
         """
+        self.score = None
         self.count_obstacles = 0
         self.count_moves = 0
 
@@ -372,6 +391,9 @@ class Dino(object):
         """Increment the number of moves done
         """
         self.count_moves += 1
+
+
+
 
 
     #------------------------------------------------------------------------------------
@@ -410,8 +432,8 @@ class Dino(object):
         elif self.method == "direct":
             proba_up = probas.data.numpy()[0][0]
             if proba_up > 0.5:
-                return "up",proba_up
                 self.increment_moves()
+                return "up",proba_up
             else:
                 return None,proba_up
 
@@ -428,7 +450,11 @@ class Dino(object):
     def evaluate(self):
         """Evaluate the fitness of the dino
         """
-        return self.score * self.count_obstacles / self.count_moves 
+        if self.count_moves > 0:
+            ratio = min([1,5*self.count_obstacles / self.count_moves])
+        else:
+            ratio = 1
+        return self.score * ratio 
 
 
 
