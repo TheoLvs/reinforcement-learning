@@ -120,7 +120,7 @@ class DinoGame(object):
 
     def _extract_game(self,img):
         mask = np.zeros_like(img)
-        mask[80:220,130:800] = 255
+        mask[80:220,145:800] = 255
         masked = cv2.bitwise_and(img,mask)
         return masked
 
@@ -166,6 +166,8 @@ class DinoGame(object):
         # Episode main loop
         while True:
 
+            t_start = time.time()
+
             # Data acquisition
             imgs,xs = self.grab_game()
             if time.time() - t < 2:
@@ -187,9 +189,8 @@ class DinoGame(object):
 
             # Scores
             if dino is not None:
-                score = (time.time() - t)*10
-                dino.set_score(score)
-                dino.set_count_obstacles(count_obstacles)
+                score = (time.time() - t_start)*10
+                dino.update_score(score,count_obstacles)
                 count_moves = str(dino.count_moves)
                 real_score = str(int(dino.evaluate()))
 
@@ -207,15 +208,15 @@ class DinoGame(object):
                     break
 
             # Condition of stop
-            if score > 20 and (imgs["raw"] == roi_array).all():
+            if (time.time() - t)*10 > 20 and (imgs["raw"] == roi_array).all():
                 break
             roi_array = imgs["raw"]
 
         # Score
-        score = (time.time() - t)*10
+        score = dino.evaluate()
         if dino is not None:
             dino.reset()
-        return score,count_obstacles
+        return score
 
 
 
@@ -224,9 +225,7 @@ class DinoGame(object):
         """
         scores = []
         for dino in tqdm(population):
-            score,count_obstacles = self.run_episode(dino = dino,**kwargs)
-            dino.set_score(score)
-            dino.set_count_obstacles(count_obstacles)
+            score = self.run_episode(dino = dino,**kwargs)
             scores.append(score)
 
         print("Generation {} : mean {} - std {} - max {} - min {}".format(n_generation,int(np.mean(scores)),int(np.std(scores)),int(np.max(scores)),int(np.min(scores))))
@@ -383,7 +382,7 @@ class Dino(object):
     def reset(self):
         """Reset all the counter
         """
-        self.score = None
+        self.score = 0
         self.count_obstacles = 0
         self.count_moves = 0
 
@@ -450,13 +449,25 @@ class Dino(object):
     def evaluate(self):
         """Evaluate the fitness of the dino
         """
-        if self.count_moves > 0:
-            ratio = min([1,5*self.count_obstacles / self.count_moves])
-        else:
-            ratio = 1
-        return self.score * ratio 
+        return self.score
 
 
+    def update_score(self,score,count_obstacles):
+        """Update scores function
+        """
+
+        # Update count of obstacles passed
+        self.set_count_obstacles(count_obstacles)
+
+        # Calculate the incremental in time elapsed
+        increment = score
+
+        # Tweaking the reward to discourage jumping behavior
+        ratio = min([1,(5*self.count_obstacles / self.count_moves)**1.5]) if self.count_moves > 0 else 1
+        increment *= ratio
+
+        # Updating score
+        self.set_score(self.score + increment)
 
 
 
