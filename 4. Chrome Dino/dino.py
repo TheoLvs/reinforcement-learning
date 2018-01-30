@@ -125,12 +125,27 @@ class DinoGame(object):
         return masked
 
 
+    def _has_passed_obstacle(self,xs,xs_old):
+        if len(xs_old) > 0 and len(xs) == 0:
+            return 1 # or len(obstacles)
+        elif len(xs_old) >= 0 and len(xs) == 0:
+            return 0
+        elif len(xs_old) == 0 and len(xs) > 0:
+            return 0
+        elif xs[0] > xs_old[0]:
+            return 1
+        else:
+            return 0
+
+
 
     #--------------------------------------------------------------------
     # RUN THE GAME
 
 
     def run_episode(self,render = None,policy = None,dino = None,**kwargs):
+        """Run one episode
+        """
 
         # Episode initialization
         roi_array = np.zeros_like(np.array(self.grab_roi()))
@@ -144,11 +159,22 @@ class DinoGame(object):
 
         t = time.time()
 
+        # Initialize obstacles counter
+        count_obstacles = 0
+        xs_old = [] 
+
         # Episode main loop
         while True:
 
             # Data acquisition
             imgs,xs = self.grab_game()
+            if time.time() - t < 2:
+                xs = []
+
+            # Count obstacles passed
+            obstacles_passed = self._has_passed_obstacle(xs,xs_old)
+            count_obstacles += obstacles_passed
+            xs_old = xs
 
             # Score
             score = (time.time() - t)*10
@@ -160,6 +186,7 @@ class DinoGame(object):
             # Rendering
             if render is not None and render in imgs:
                 cv2.putText(imgs[render],probas,(30,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
+                cv2.putText(imgs[render],str(count_obstacles),(150,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
                 cv2.imshow(render,imgs[render])
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -171,7 +198,7 @@ class DinoGame(object):
 
         # Score
         score = (time.time() - t)*10
-        return score
+        return score,count_obstacles
 
 
 
@@ -180,8 +207,9 @@ class DinoGame(object):
         """
         scores = []
         for dino in tqdm(population):
-            score = self.run_episode(dino = dino,**kwargs)
+            score,count_obstacles = self.run_episode(dino = dino,**kwargs)
             dino.set_score(score)
+            dino.set_count_obstacles(count_obstacles)
             scores.append(score)
 
         print("Generation {} : mean {} - std {} - max {} - min {}".format(n_generation,int(np.mean(scores)),int(np.std(scores)),int(np.max(scores)),int(np.min(scores))))
@@ -202,11 +230,13 @@ class DinoGame(object):
 
 
     #--------------------------------------------------------------------
-    # ACTIONS
+    # INPUT PREPARATION
 
 
 
     def prepare_xs_vector(self,xs,pixels_blur = 1):
+        """Prepare input as a vector
+        """
         x = np.zeros(700)
 
         if len(xs) > 0:
@@ -222,6 +252,8 @@ class DinoGame(object):
 
 
     def prepare_xs_direct(self,xs,n_obstacles = 2):
+        """Prepare direct input
+        """
         if len(xs) == 0:
             xs = [700,700]
         elif len(xs) == 1:
@@ -236,35 +268,46 @@ class DinoGame(object):
 
 
 
+    #--------------------------------------------------------------------
+    # ENVIRONMENT EVALUATION
 
 
     def act(self,imgs,xs,score,policy = None,dino = None,**kwargs):
+        """Action evaluation of the environment
+        """
 
-
+        # RANDOM POLICY
         if policy == "random":
             action = random.choice(["up","down",None])
             self.move(action)
 
+        # HEURISTICS POLICY
         elif policy == "rules":
             th = 300 if "th" not in kwargs else kwargs["th"]
             th = max(th - score/100,150)
             if len(xs) > 0 and xs[0] < th:
                 self.move("up")
 
+        # MACHINE LEARNING POLICY
         elif dino is not None:
+
+            # Flat input method
             if "flat700" in dino.method:
                 xs = self.prepare_xs_vector(xs)
                 action,probas = dino.act(xs)
                 self.move(action)
                 return probas
+
+            # Direct input method
             elif "direct" in dino.method:
                 n_obstacles = 2 if "n_obstacles" not in kwargs else kwargs["n_obstacles"]
                 xs = self.prepare_xs_direct(xs,n_obstacles = n_obstacles)
                 action,probas = dino.act(xs)
                 self.move(action)
                 return probas
-                
+        
 
+        # NO POLICY
         else:
             pass
 
@@ -279,19 +322,30 @@ class DinoGame(object):
 
 
 class Dino(object):
+    """Dinosaur ontology
+    """
     def __init__(self,method = "direct",net = None,n_obstacles = 2,alpha = 1e-1):
+        """Initialization
+        """
         self.score = None
+        self.reset_counters()
         self.method = method
         self.n_obstacles = n_obstacles
         self.alpha = alpha
         self.create_net(net,n_obstacles = n_obstacles)
 
+
     def __add__(self,other):
+        """Add operator
+        """
         new_net = self.net + other.net
         return Dino(method = self.method,net = new_net,n_obstacles = self.n_obstacles)
 
 
+
     def create_net(self,net = None,n_obstacles = 2):
+        """Create core neural network architecture for decision
+        """
         if net is not None:
             self.net = net
 
@@ -304,7 +358,44 @@ class Dino(object):
         else:
             self.net = None
 
+
+    #------------------------------------------------------------------------------------
+    # COUNTERS
+
+    def reset_counters(self):
+        """Reset all the counter
+        """
+        self.count_obstacles = 0
+        self.count_moves = 0
+
+    def increment_moves(self):
+        """Increment the number of moves done
+        """
+        self.count_moves += 1
+
+
+    #------------------------------------------------------------------------------------
+    # SETTERS
+
+    def set_count_obstacles(self,count_obstacles):
+        """Set the count of obstacles passed as an attribute
+        """
+        self.count_obstacles = count_obstacles
+
+
+    def set_score(self,score):
+        """Set the score as an dino attribute
+        """
+        self.score = score
+
+
+    #------------------------------------------------------------------------------------
+    # CORE FUNCTIONS
+
+
     def act(self,x):
+        """Dinosaur action
+        """
         probas = self.net.forward(x)
         if self.method == "flat700nn":
             action = np.argmax(probas.data.numpy())
@@ -320,6 +411,7 @@ class Dino(object):
             proba_up = probas.data.numpy()[0][0]
             if proba_up > 0.5:
                 return "up",proba_up
+                self.increment_moves()
             else:
                 return None,proba_up
 
@@ -328,15 +420,17 @@ class Dino(object):
 
 
     def mutate(self):
+        """Mutate the core neural network
+        """
         self.net.mutate(self.alpha)
 
 
     def evaluate(self):
-        return self.score
+        """Evaluate the fitness of the dino
+        """
+        return self.score * self.count_obstacles / self.count_moves 
 
 
-    def set_score(self,score):
-        self.score = score
 
 
 
@@ -370,6 +464,9 @@ class Population(object):
         else:
             self.dinos = dinos
 
+    #------------------------------------------------------------------------------------
+    # OPERATORS
+
 
     def __getitem__(self,key):
         if type(key) == tuple or type(key) == list:
@@ -386,6 +483,9 @@ class Population(object):
     def __len__(self):
         return len(self.dinos)
 
+
+    #------------------------------------------------------------------------------------
+    # CORE FUNCTIONS
 
 
     def evaluate(self):
