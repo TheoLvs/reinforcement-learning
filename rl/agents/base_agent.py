@@ -38,7 +38,7 @@ class Agent(object):
 
 
     def expand_state_vector(self,state):
-        if len(state.shape) == 1:
+        if len(state.shape) == 1 or len(state.shape)==3:
             return np.expand_dims(state,axis = 0)
         else:
             return state
