@@ -38,11 +38,11 @@ from rl.agents.base_agent import Agent
 
 
 class DQNAgent(Agent):
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.995,gamma = 0.95,lr = 0.001,low = 0,high = 1,observation_type = "discrete"):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.995,gamma = 0.95,lr = 0.001,low = 0,high = 1,max_memory = 2000,observation_type = "discrete"):
         assert observation_type in ["discrete","continuous"]
         self.states_size = states_size
         self.actions_size = actions_size
-        self.memory = Memory()
+        self.memory = Memory(max_memory = max_memory)
         self.epsilon = epsilon
         self.low = low
         self.high = high

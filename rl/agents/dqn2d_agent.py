@@ -89,7 +89,7 @@ class DQN2DAgent(DQNAgent):
         model = create_model(states_size,actions_size)
         model.compile(loss='categorical_crossentropy',
                       metrics=['accuracy'],
-                      optimizer=Adam(lr=self.lr))
+                      optimizer="adam")
         return model
 
 

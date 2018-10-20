@@ -54,9 +54,11 @@ from rl.agents.dqn2d_agent import DQN2DAgent
 
 
 N_EPISODES = 1000
-MAX_STEPS = 1000
+MAX_STEPS = 10000
 RENDER = True
 RENDER_EVERY = 50
+BATCH_SIZE = 256
+MAX_MEMORY = MAX_STEPS
 
 
 
@@ -67,14 +69,14 @@ RENDER_EVERY = 50
 if __name__ == "__main__":
 
     # Define the gym environment
-    env = gym.make('Breakout-v0')
+    env = gym.make('Pong-v0')
 
     # Get the environement action and observation space
     state_size = env.observation_space.shape
     action_size = env.action_space.n
 
     # Create the RL Agent
-    agent = DQN2DAgent(state_size,action_size)
+    agent = DQN2DAgent(state_size,action_size,max_memory = MAX_MEMORY)
 
     # Initialize a list to store the rewards
     rewards = []
@@ -110,8 +112,10 @@ if __name__ == "__main__":
             # Take the action, get the reward from environment and go to the next state
             s_next,r,done,info = env.step(a)
 
+            # print(r)
+
             # Tweaking the reward to make it negative when we lose
-            r = r if not done else -10
+            # r = r if not done else -10
 
             # Remember the important variables
             agent.remember(
@@ -139,7 +143,7 @@ if __name__ == "__main__":
 
 
         # Training
-        agent.train()
+        agent.train(batch_size = BATCH_SIZE)
 
 
 
