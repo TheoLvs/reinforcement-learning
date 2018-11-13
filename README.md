@@ -19,6 +19,7 @@
 - [Udemy course on RL](https://www.udemy.com/artificial-intelligence-reinforcement-learning-in-python/)  
 - [David Silver course on RL at UCL](http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching.html)
 - [Berkeley course on AI](http://ai.berkeley.edu/lecture_slides.html)
+- [Spinning up course by OpenAI](https://spinningup.openai.com/en/latest/)
 
 
 ##### Q Learning references
