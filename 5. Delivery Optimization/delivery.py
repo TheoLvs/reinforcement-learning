@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 from tqdm import tqdm_notebook
+from scipy.spatial.distance import cdist
 
 plt.style.use("seaborn-dark")
 
@@ -12,12 +13,13 @@ plt.style.use("seaborn-dark")
 
 
 class DeliveryEnvironment(object):
-    def __init__(self,n_stops = 10,max_box = 10):
+    def __init__(self,n_stops = 10,max_box = 10,method = "distance"):
 
         print(f"Initialized Delivery Environment with {n_stops} random stops")
+        print(f"Target metric for optimization is {method}")
 
         # Initialization
-        self.n_stops = 10
+        self.n_stops = n_stops
         self.action_space = self.n_stops
         self.observation_space = self.n_stops
         self.max_box = max_box
@@ -25,6 +27,7 @@ class DeliveryEnvironment(object):
 
         # Generate stops
         self._generate_stops()
+        self._generate_q_values(method = method)
         self.render()
 
         # Initialize first point
@@ -39,8 +42,18 @@ class DeliveryEnvironment(object):
         self.x = xy[:,0]
         self.y = xy[:,1]
 
+
+    def _generate_q_values(self,method="distance"):
+
         # Generate actual Q Values corresponding to time elapsed between two points
-        self.q_stops = np.random.rand(self.n_stops,self.n_stops)*self.max_box
+        if method=="distance":
+            xy = np.column_stack([self.x,self.y])
+            self.q_stops = cdist(xy,xy)
+        elif method=="time":
+            self.q_stops = np.random.rand(self.n_stops,self.n_stops)*self.max_box
+            np.fill_diagonal(self.q_stops,0)
+        else:
+            raise Exception("Method not recognized")
     
 
     def render(self):
