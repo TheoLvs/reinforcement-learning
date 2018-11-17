@@ -9,6 +9,10 @@ from scipy.spatial.distance import cdist
 
 plt.style.use("seaborn-dark")
 
+import sys
+sys.path.append("../")
+from rl.agents.q_agent import QAgent
+
 
 
 
@@ -95,6 +99,8 @@ class DeliveryEnvironment(object):
         first_stop = np.random.randint(self.n_stops)
         self.stops.append(first_stop)
 
+        return first_stop
+
 
     def step(self,destination):
 
@@ -125,3 +131,79 @@ class DeliveryEnvironment(object):
 
     def _get_reward(self,state,new_state):
         return self.q_stops[state,new_state]
+
+
+
+
+
+
+def run_episode(env,agent,max_step = 100,verbose = 1):
+
+    s = env.reset()
+    agent.reset_memory()
+    
+    episode_reward = 0
+    
+    i = 0
+    while i < max_step:
+
+        # Remember the states
+        agent.remember_state(s)
+
+        # Choose an action
+        a = agent.act(s)
+        
+        # Take the action, and get the reward from environment
+        s_next,r,done = env.step(a)
+
+        # Tweak the reward
+        r = -1 * r
+        
+        if verbose: print(s_next,r,done)
+        
+        # Update our knowledge in the Q-table
+        agent.train(s,a,r,s_next)
+        
+        # Update the caches
+        episode_reward += r
+        s = s_next
+        
+        # If the episode is terminated
+        i += 1
+        if done:
+            break
+            
+    return env,agent,episode_reward
+
+
+
+
+
+
+class DeliveryQAgent(QAgent):
+
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.reset_memory()
+
+    def act(self,s):
+
+        # Get Q Vector
+        q = np.copy(self.Q[s,:])
+
+        # Avoid already visited states
+        q[self.states_memory] = -np.inf
+
+        if np.random.rand() > self.epsilon:
+            a = np.argmax(q)
+        else:
+            a = np.random.choice([x for x in range(self.actions_size) if x not in self.states_memory])
+
+        return a
+
+
+    def remember_state(self,s):
+        self.states_memory.append(s)
+
+    def reset_memory(self):
+        self.states_memory = []
