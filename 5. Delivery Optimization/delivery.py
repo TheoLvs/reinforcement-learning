@@ -6,6 +6,7 @@ import os
 import time
 from tqdm import tqdm_notebook
 from scipy.spatial.distance import cdist
+import imageio
 
 plt.style.use("seaborn-dark")
 
@@ -60,14 +61,14 @@ class DeliveryEnvironment(object):
             raise Exception("Method not recognized")
     
 
-    def render(self):
+    def render(self,return_img = False):
         
         fig = plt.figure(figsize=(7,7))
         ax = fig.add_subplot(111)
-        plt.title("Delivery Stops")
+        ax.set_title("Delivery Stops")
 
         # Show stops
-        plt.scatter(self.x,self.y,c = "red",s = 50)
+        ax.scatter(self.x,self.y,c = "red",s = 50)
 
         # Show START
         if len(self.stops)>0:
@@ -77,7 +78,7 @@ class DeliveryEnvironment(object):
 
         # Show itinerary
         if len(self.stops) > 1:
-            plt.plot(self.x[self.stops],self.y[self.stops],c = "blue",linewidth=1,linestyle="--")
+            ax.plot(self.x[self.stops],self.y[self.stops],c = "blue",linewidth=1,linestyle="--")
             
             # Annotate END
             xy = self._get_xy(initial = False)
@@ -86,7 +87,16 @@ class DeliveryEnvironment(object):
 
         plt.xticks([])
         plt.yticks([])
-        plt.show()
+        
+        if return_img:
+            # From https://ndres.me/post/matplotlib-animated-gifs-easily/
+            fig.canvas.draw_idle()
+            image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+            image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            plt.close()
+            return image
+        else:
+            plt.show()
 
 
 
@@ -207,3 +217,33 @@ class DeliveryQAgent(QAgent):
 
     def reset_memory(self):
         self.states_memory = []
+
+
+
+def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,fps=10):
+
+    # Store the rewards
+    rewards = []
+    imgs = []
+
+    # Experience replay
+    for i in tqdm_notebook(range(n_episodes)):
+
+        # Run the episode
+        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+        rewards.append(episode_reward)
+        
+        if i % render_each == 0:
+            img = env.render(return_img = True)
+            imgs.append(img)
+
+    # Show rewards
+    plt.figure(figsize = (15,3))
+    plt.title("Rewards over training")
+    plt.plot(rewards)
+    plt.show()
+
+    # Save imgs as gif
+    imageio.mimsave(name,imgs,fps = fps)
+
+    return env,agent
