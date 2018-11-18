@@ -57,6 +57,8 @@ class DeliveryEnvironment(object):
         elif method=="time":
             self.q_stops = np.random.rand(self.n_stops,self.n_stops)*self.max_box
             np.fill_diagonal(self.q_stops,0)
+        elif method == "traffic_box":
+            pass
         else:
             raise Exception("Method not recognized")
     
