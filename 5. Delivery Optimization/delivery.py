@@ -265,10 +265,12 @@ class DeliveryEnvironment(object):
 
 
 
-def run_episode(env,agent,max_step = 100,verbose = 1):
+def run_episode(env,agent,verbose = 1):
 
     s = env.reset()
     agent.reset_memory()
+
+    max_step = env.n_stops
     
     episode_reward = 0
     
