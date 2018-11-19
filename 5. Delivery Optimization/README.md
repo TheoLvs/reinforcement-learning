@@ -7,6 +7,11 @@ It will use the code of RL agents previously created in this repo.
 > The overall goal is to optimize routing between deliveries via **experience replay** <br>
 > And be robust to anomalies such as traffic slowing down the vehicles in a zone
 
+##### Preliminary remarks
+Such a problem (Travelling Salesman Problem) has many possible solutions including brute force or heuristic solutions. <br>
+The goal here was to demonstrate the use of Reinforcement Learning in particular **when the cost function between two points is stochastic**<br>
+It shows also a different resolution with a algorithm that could be used in a live system and automatically improves other time towards the best stragies.  
+
 
 # The environment 
 
