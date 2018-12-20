@@ -18,14 +18,48 @@ from rl.agents.q_agent import QAgent
 
 COLORS = ["red","white","orange","yellow","green","blue"]
 WIDTH_SQUARE = 0.05
+FACES = ["FRONT","RIGHT","BACK","LEFT","TOP","BOTTOM"]
 
 
 class RubiksCube(object):
-    def __init__(self):
+    def __init__(self,shuffle = True):
 
         print(f"Initialized RubiksCube")
-        self.data = np.array(*[list(range(6))*9])
-        np.random.shuffle(self.data)
+        self.data = np.array([[i]*9 for i in range(6)])
+        self.data = self._to_1D(self.data)
+
+        if shuffle:
+            np.random.shuffle(self.data)
+
+    @staticmethod
+    def _to_1D(array):
+        return np.squeeze(array.reshape(1,-1))
+
+    @staticmethod
+    def _to_2D(array):
+        return array.reshape(6,9)
+
+    @staticmethod
+    def _to_square(face):
+        return face.reshape(3,3)
+
+
+    def get_face(self,face,as_square = True):
+        if isinstance(face,str):
+            assert face in FACES
+            face = FACES.index(face)
+        face = self.data[face*9:(face+1)*9]
+        if as_square:
+            face = self._to_square(face)
+        return face
+
+
+    def rotate(self,face,clockwise = True):
+        pass
+
+
+    def render3D(self):
+        pass   
 
 
     def render(self):
