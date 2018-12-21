@@ -45,6 +45,8 @@ class RubiksCube(object):
 
 
     def get_face(self,face,as_square = True):
+        """Function to get one face of the Rubik's cube data
+        """
         if isinstance(face,str):
             assert face in FACES
             face = FACES.index(face)
