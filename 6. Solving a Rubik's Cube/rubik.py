@@ -18,7 +18,7 @@ from rl.agents.q_agent import QAgent
 
 COLORS = ["red","white","orange","yellow","green","blue"]
 WIDTH_SQUARE = 0.05
-FACES = ["FRONT","RIGHT","BACK","LEFT","TOP","BOTTOM"]
+FACES = ["LEFT","FRONT","RIGHT","BACK","TOP","BOTTOM"]
 
 
 class RubiksCube(object):
@@ -43,22 +43,71 @@ class RubiksCube(object):
     def _to_square(face):
         return face.reshape(3,3)
 
+    @staticmethod
+    def _to_array(face):
+        return face.reshape(6,1)
 
-    def get_face(self,face,as_square = True):
-        """Function to get one face of the Rubik's cube data
+
+    @staticmethod
+    def _facestr_to_faceid(face):
+        """Convert face as string to face ID (between 0 and 5)
         """
         if isinstance(face,str):
             assert face in FACES
             face = FACES.index(face)
-        face = self.data[face*9:(face+1)*9]
-        if as_square:
-            face = self._to_square(face)
         return face
 
 
-    def rotate(self,face,clockwise = True):
-        pass
+    def get_face(self,face,as_square = True):
+        """Function to get one face of the Rubik's cube
+        """
 
+        # Convert face as string to face ID (between 0 and 5)
+        face = self._facestr_to_faceid(face)
+
+        # Select matching face in the data array
+        face = self.data[face*9:(face+1)*9]
+
+        # Reshape face data to a square 
+        if as_square:
+            face = self._to_square(face)
+
+        # Return face data
+        return face
+
+
+
+
+    def set_face(self,face,array):
+
+        # Convert face as string to face ID (between 0 and 5)
+        face = self._facestr_to_faceid(face)
+
+        # Reshape array
+        if array.shape != (3,3):
+            array = self._to_square(array)
+
+        # Set face
+        self.data[face*9:(face+1)*9] = array
+
+
+
+
+
+    def rotate(self,face,clockwise = True):
+        """Rotate one face of the Rubik's cube
+        """
+        # Convert face as string to face ID (between 0 and 5)
+        face_id = self._facestr_to_faceid(face)
+
+        # Get face
+        face_data = self.get_face(face_id)
+
+        # Rotate selected face
+        sense = -1 if clockwise else 1
+        face_data = np.rot90(face_data,k=sense)
+        self.set_face(face,face_data)
+        
 
     def render3D(self):
         pass   
@@ -91,8 +140,11 @@ class RubiksCube(object):
 
 class RubiksFace(object):
     def __init__(self,array):
-        assert len(array) == 9
-        self.array = array.reshape(3,3)
+        if array.shape == (3,3):
+            self.array = array
+        else:
+            assert len(array) == 9
+            self.array = array.reshape(3,3)
         
     def render(self,ax = None,init_height = 0,init_width = 0):
 
