@@ -10,16 +10,68 @@ from matplotlib.collections import PatchCollection
 
 plt.style.use("seaborn-dark")
 
-import sys
-sys.path.append("../")
-from rl.agents.q_agent import QAgent
+# import sys
+# sys.path.append("../")
+# from rl.agents.q_agent import QAgent
 
-
+#----------------------------------------------------------------------------------------------------------------------------
+# CONSTANTS
+#----------------------------------------------------------------------------------------------------------------------------
 
 COLORS = ["red","white","orange","yellow","green","blue"]
 WIDTH_SQUARE = 0.05
 FACES = ["LEFT","FRONT","RIGHT","BACK","TOP","BOTTOM"]
 
+LEFT_SLICE = np.s_[0,:]
+RIGHT_SLICE = np.s_[-1,:]
+TOP_SLICE = np.s_[:,0]
+BOTTOM_SLICE = np.s_[:,-1]
+
+FACES_LINK = {
+    "LEFT":[
+        ("BACK",RIGHT_SLICE),
+        ("BOTTOM",LEFT_SLICE),
+        ("FRONT",LEFT_SLICE),
+        ("TOP",LEFT_SLICE),
+    ],
+    "FRONT":[
+        ("LEFT",RIGHT_SLICE),
+        ("BOTTOM",BOTTOM_SLICE),
+        ("RIGHT",LEFT_SLICE),
+        ("TOP",TOP_SLICE),
+    ],
+    "RIGHT":[
+        ("TOP",RIGHT_SLICE),
+        ("FRONT",RIGHT_SLICE),
+        ("BOTTOM",RIGHT_SLICE),
+        ("BACK",LEFT_SLICE),
+    ],
+    "BACK":[
+        ("TOP",BOTTOM_SLICE),
+        ("RIGHT",RIGHT_SLICE),
+        ("BOTTOM",TOP_SLICE),
+        ("LEFT",LEFT_SLICE),
+    ],
+    "TOP":[
+        ("LEFT",BOTTOM_SLICE),
+        ("FRONT",BOTTOM_SLICE),
+        ("RIGHT",BOTTOM_SLICE),
+        ("BACK",BOTTOM_SLICE),
+    ],
+    "BOTTOM":[
+        ("BACK",TOP_SLICE),
+        ("RIGHT",TOP_SLICE),
+        ("FRONT",TOP_SLICE),
+        ("LEFT",TOP_SLICE),
+    ],
+}
+
+
+
+
+#----------------------------------------------------------------------------------------------------------------------------
+# RUBIKS CUBE ENVIRONMENT CLASS
+#----------------------------------------------------------------------------------------------------------------------------
 
 class RubiksCube(object):
     def __init__(self,shuffle = True):
@@ -45,7 +97,7 @@ class RubiksCube(object):
 
     @staticmethod
     def _to_array(face):
-        return face.reshape(6,1)
+        return face.reshape(9)
 
 
     @staticmethod
@@ -56,6 +108,14 @@ class RubiksCube(object):
             assert face in FACES
             face = FACES.index(face)
         return face
+
+
+    @staticmethod
+    def _rotate_array(array,clockwise = True):
+        if clockwise:
+            return array[1:] + [array[0]]
+        else:
+            return [array[-1]] + array[:-1]
 
 
     def get_face(self,face,as_square = True):
@@ -84,8 +144,8 @@ class RubiksCube(object):
         face = self._facestr_to_faceid(face)
 
         # Reshape array
-        if array.shape != (3,3):
-            array = self._to_square(array)
+        if array.shape == (3,3):
+            array = self._to_array(array)
 
         # Set face
         self.data[face*9:(face+1)*9] = array
@@ -107,7 +167,22 @@ class RubiksCube(object):
         sense = -1 if clockwise else 1
         face_data = np.rot90(face_data,k=sense)
         self.set_face(face,face_data)
+
+        # Get other faces
+        linked_faces,slices = zip(*FACES_LINK[face])
+        slices_data = [np.copy(self.get_face(linked_faces[i])[slices[i]]) for i in range(4)]
+
+        # Rotate arrays
+        slices_data = self._rotate_array(slices_data,clockwise = clockwise)
+
+        # Set new rotated arrays
+        for i in range(4):
+            face = linked_faces[i]
+            face_data = self.get_face(face)
+            face_data[slices[i]] = slices_data[i]
+            self.set_face(face,face_data)
         
+
 
     def render3D(self):
         pass   
