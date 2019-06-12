@@ -12,7 +12,7 @@ This repository hold the development of a business question that can be solved w
 ***
 ## Data Center Cooling environment
 
-SOON
+To try out the app, launch with ``python app.py`` and go to port ``localhost:8050``
 
 
 
