@@ -1,9 +1,5 @@
-# Base Data Science snippet
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-import time
 from tqdm import tqdm_notebook
 from scipy.spatial.distance import cdist
 import imageio
@@ -18,12 +14,12 @@ plt.style.use("seaborn-dark")
 
 def _is_in_box(x, y, box):
     # Get box coordinates
-    x_left,x_right,y_bottom,y_top = box
+    x_left, x_right, y_bottom, y_top = box
     return x_left <= x <= x_right and y_bottom <= y <= y_top
 
 
 class DeliveryEnvironment(object):
-    def __init__(self, n_stops=10, max_box=10, method="distance",**kwargs):
+    def __init__(self, n_stops=10, max_box=10, method="distance", **kwargs):
 
         print(f"Initialized Delivery Environment with {n_stops} random stops")
         print(f"Target metric for optimization is {method}")
@@ -45,7 +41,7 @@ class DeliveryEnvironment(object):
         # Initialize first point
         self.reset()
 
-    def _generate_constraints(self,box_size = 0.2,traffic_intensity = 5):
+    def _generate_constraints(self, box_size=0.2, traffic_intensity=5):
 
         if self.method == "traffic_box":
 
@@ -55,7 +51,7 @@ class DeliveryEnvironment(object):
             x_right = x_left + np.random.rand() * box_size * self.max_box
             y_top = y_bottom + np.random.rand() * box_size * self.max_box
 
-            self.box = (x_left, x_right, y_bottom,y_top)
+            self.box = (x_left, x_right, y_bottom, y_top)
             self.traffic_intensity = traffic_intensity 
 
     def _generate_stops(self):
@@ -64,7 +60,7 @@ class DeliveryEnvironment(object):
 
             points = []
             while len(points) < self.n_stops:
-                x,y = np.random.rand(2)*self.max_box
+                x, y = np.random.rand(2)*self.max_box
                 if not _is_in_box(x, y, self.box):
                     points.append((x, y))
 
@@ -77,19 +73,19 @@ class DeliveryEnvironment(object):
         self.x = xy[:, 0]
         self.y = xy[:, 1]
 
-    def _generate_q_values(self,box_size = 0.2):
+    def _generate_q_values(self):
 
         # Generate actual Q Values corresponding to time elapsed between two points
         if self.method in ["distance", "traffic_box"]:
             xy = np.column_stack([self.x, self.y])
             self.q_stops = cdist(xy, xy)
-        elif self.method=="time":
+        elif self.method == "time":
             self.q_stops = np.random.rand(self.n_stops, self.n_stops) * self.max_box
             np.fill_diagonal(self.q_stops, 0)
         else:
             raise Exception("Method not recognized")
     
-    def render(self,return_img = False):
+    def render(self, return_img=False):
         
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111)
@@ -100,7 +96,7 @@ class DeliveryEnvironment(object):
 
         # Show START
         if len(self.stops) > 0:
-            xy = self._get_xy(initial = True)
+            xy = self._get_xy(initial=True)
             xytext = xy[0]+0.1, xy[1]-0.05
             ax.annotate("START", xy=xy, xytext=xytext, weight="bold")
 
@@ -109,8 +105,8 @@ class DeliveryEnvironment(object):
             ax.plot(self.x[self.stops], self.y[self.stops], c="blue", linewidth=1, linestyle="--")
             
             # Annotate END
-            xy = self._get_xy(initial = False)
-            xytext = xy[0]+0.1,xy[1]-0.05
+            xy = self._get_xy(initial=False)
+            xytext = xy[0]+0.1, xy[1]-0.05
             ax.annotate("END", xy=xy, xytext=xytext, weight="bold")
 
         if hasattr(self, "box"):
@@ -118,7 +114,7 @@ class DeliveryEnvironment(object):
             width = self.box[1] - self.box[0]
             height = self.box[3] - self.box[2]
             rect = Rectangle((left, bottom), width, height)
-            collection = PatchCollection([rect],facecolor="red", alpha=0.2)
+            collection = PatchCollection([rect], facecolor="red", alpha=0.2)
             ax.add_collection(collection)
 
         plt.xticks([])
@@ -168,8 +164,8 @@ class DeliveryEnvironment(object):
         y = self.y[state]
         return x, y
 
-    def _get_reward(self,state,new_state):
-        base_reward = self.q_stops[state,new_state]
+    def _get_reward(self, state, new_state):
+        base_reward = self.q_stops[state, new_state]
 
         if self.method == "distance":
             return base_reward
@@ -210,10 +206,10 @@ class DeliveryEnvironment(object):
             else:
                 raise Exception("Provide x or y")
 
-    def _calculate_box_intersection(self,x1,x2,y1,y2,box):
+    def _calculate_box_intersection(self, x1, x2, y1, y2, box):
 
         # Get box coordinates
-        x_left,x_right,y_bottom,y_top = box
+        x_left, x_right, y_bottom, y_top = box
 
         # Intersections
         intersections = []
@@ -285,9 +281,9 @@ def run_episode(env, agent, verbose=1):
 
 class DeliveryQAgent(QAgent):
 
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        self.reset_memory()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.states_memory = []
 
     def act(self, s):
 
@@ -304,14 +300,14 @@ class DeliveryQAgent(QAgent):
 
         return a
 
-    def remember_state(self,s):
+    def remember_state(self, s):
         self.states_memory.append(s)
 
     def reset_memory(self):
         self.states_memory = []
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,fps=10):
+def run_n_episodes(env, agent, name="training.gif", n_episodes=1000, render_each=10, fps=10):
 
     # Store the rewards
     rewards = []
@@ -321,11 +317,11 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
     for i in tqdm_notebook(range(n_episodes)):
 
         # Run the episode
-        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+        env, agent, episode_reward = run_episode(env, agent, verbose=0)
         rewards.append(episode_reward)
         
         if i % render_each == 0:
-            img = env.render(return_img = True)
+            img = env.render(return_img=True)
             imgs.append(img)
 
     # Show rewards
