@@ -59,6 +59,11 @@ class DeliveryEnvironment(object):
 
             xy = np.array(points)
 
+        elif self.method == "time_window":
+            xy = np.random.rand(self.n_stops, 2) * self.max_box
+            self.time_window = []
+            for a in range(10):
+                self.time_window.append(round(np.random.rand()))
         else:
             # Generate geographical coordinates
             xy = np.random.rand(self.n_stops, 2) * self.max_box
