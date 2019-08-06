@@ -16,7 +16,7 @@ class DeliveryQAgent(QAgent):
         super().__init__(*args, **kwargs)
         self.states_memory = []
 
-    def act(self, s):
+    def act(self, s, shift=-1):
 
         # Get Q Vector
         q = np.copy(self.Q[s, :])
@@ -27,7 +27,12 @@ class DeliveryQAgent(QAgent):
         if np.random.rand() > self.epsilon:
             a = np.argmax(q)
         else:
-            a = np.random.choice([x for x in range(self.actions_size) if x not in self.states_memory])
+            possible_states = [x for x in range(self.actions_size) if x not in self.states_memory]
+            if shift > -1:
+                for x in range(self.actions_size):
+                    if self.time_window == shift:
+                        possible_states.remove(x)
+            a = np.random.choice(possible_states)
 
         return a
 
