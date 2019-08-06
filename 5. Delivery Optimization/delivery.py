@@ -38,6 +38,29 @@ class DeliveryQAgent(QAgent):
         self.states_memory = []
 
 
+class DeliveryAgentTimeWindow(DeliveryQAgent):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.time_windows = []
+
+    def act(self, s):
+
+        # Get Q Vector
+        q = np.copy(self.Q[s, :])
+
+        # Avoid already visited states
+        q[self.states_memory] = -np.inf
+
+        if np.random.rand() > self.epsilon:
+            a = np.argmax(q)
+        else:
+            available_states = [x for x in range(self.actions_size) if x not in self.states_memory]
+            a = np.random.choice(available_states)
+
+        return a
+
+
 def run_episode(env, agent, verbose=1):
     s = env.reset()
     agent.reset_memory()
@@ -87,7 +110,7 @@ def run_n_episodes(env, agent, name="training.gif", n_episodes=1000, render_each
 
     # Experience replay
     for i in tqdm_notebook(range(n_episodes)):
-
+        print('episod: ' + str(i))
         # Run the episode
         env, agent, episode_reward = run_episode(env, agent, verbose=0)
         rewards.append(episode_reward)
