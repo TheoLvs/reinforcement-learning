@@ -24,11 +24,13 @@ class DeliveryEnvironment(object):
         self.max_box = max_box
         self.stops = []
         self.method = method
+        self.constraint_factor = []
 
         # Generate stops
         self._generate_constraints(**kwargs)
         self._generate_stops()
         self._generate_q_values()
+        self._generate_soft_constraint()
         # self.render()
 
         # Initialize first point
@@ -47,6 +49,23 @@ class DeliveryEnvironment(object):
             self.box = (x_left, x_right, y_bottom, y_top)
             self.traffic_intensity = traffic_intensity
 
+    def _generate_soft_constraint(self):
+        if self.method != "time_window":
+            return
+        self.constraint_factor = np.empty((self.n_stops, self.n_stops))
+        for i in range(self.n_stops):
+            for j in range(self.n_stops):
+                if self.time_window[i] == self.time_window[j]:
+                    # Both tasks are at the same time window - leave distance as is.
+                    self.constraint_factor[i][j] = 1
+                elif self.time_window[j] > self.time_window[i]:
+                    # Destination is later then origin - take it only if no other task at the same time window
+                    self.constraint_factor[i][j] = 100
+                else:
+                    # Destination is earlier then origin - should be technically impossible
+                    self.constraint_factor[i][j] = 10000000
+            self.q_stops = np.multiply(self.q_stops, self.constraint_factor)
+
     def _generate_stops(self):
 
         if self.method == "traffic_box":
@@ -59,6 +78,11 @@ class DeliveryEnvironment(object):
 
             xy = np.array(points)
 
+        elif self.method == "time_window":
+            self.time_window = []
+            for t in range(self.n_stops):
+                self.time_window.append(round(np.random.rand()))
+            xy = np.random.rand(self.n_stops, 2) * self.max_box
         else:
             # Generate geographical coordinates
             xy = np.random.rand(self.n_stops, 2) * self.max_box
@@ -67,14 +91,11 @@ class DeliveryEnvironment(object):
         self.y = xy[:, 1]
 
     def _generate_q_values(self):
-
-        # Generate actual Q Values corresponding to time elapsed between two points
-        if self.method in ["distance", "traffic_box"]:
+        # Generate actual Q Values corresponding to the distance
+        # Soft Constraints are implemented here using the constraint_factor table by factoring the distance values
+        if self.method in ["distance", "traffic_box", "time_window"]:
             xy = np.column_stack([self.x, self.y])
             self.q_stops = cdist(xy, xy)
-        elif self.method == "time":
-            self.q_stops = np.random.rand(self.n_stops, self.n_stops) * self.max_box
-            np.fill_diagonal(self.q_stops, 0)
         else:
             raise Exception("Method not recognized")
 
@@ -85,7 +106,15 @@ class DeliveryEnvironment(object):
         ax.set_title("Delivery Stops")
 
         # Show stops
-        ax.scatter(self.x, self.y, c="red", s=50)
+        color = 'red'
+        if self.method == 'time_window':
+            color = []
+            for i in range(8):
+                if self.time_window[i] == 0:
+                    color.append('red')
+                else:
+                    color.append('black')
+        ax.scatter(self.x, self.y, c=color, s=50)
 
         # Show START
         if len(self.stops) > 0:
@@ -162,10 +191,7 @@ class DeliveryEnvironment(object):
 
         if self.method == "distance":
             return base_reward
-        elif self.method == "time":
-            return base_reward + np.random.randn()
         elif self.method == "traffic_box":
-
             # Additional reward correspond to slowing down in traffic
             xs, ys = self.x[state], self.y[state]
             xe, ye = self.x[new_state], self.y[new_state]
@@ -176,8 +202,13 @@ class DeliveryEnvironment(object):
                 additional_reward = distance_traffic * self.traffic_intensity * np.random.rand()
             else:
                 additional_reward = np.random.rand()
+        elif self.method == "time_window":
+            # Additional reward correspond to time window
+            additional_reward = self.constraint_factor[state][new_state]
+        else:
+            raise Exception('Method do not have reward')
 
-            return base_reward + additional_reward
+        return base_reward + additional_reward
 
     @staticmethod
     def _calculate_point(x1, x2, y1, y2, x=None, y=None):

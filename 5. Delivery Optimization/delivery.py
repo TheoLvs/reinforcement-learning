@@ -16,6 +16,39 @@ class DeliveryQAgent(QAgent):
         super().__init__(*args, **kwargs)
         self.states_memory = []
 
+    def act(self, s, shift=-1):
+
+        # Get Q Vector
+        q = np.copy(self.Q[s, :])
+
+        # Avoid already visited states
+        q[self.states_memory] = -np.inf
+
+        if np.random.rand() > self.epsilon:
+            a = np.argmax(q)
+        else:
+            possible_states = [x for x in range(self.actions_size) if x not in self.states_memory]
+            if shift > -1:
+                for x in range(self.actions_size):
+                    if self.time_window == shift:
+                        possible_states.remove(x)
+            a = np.random.choice(possible_states)
+
+        return a
+
+    def remember_state(self, s):
+        self.states_memory.append(s)
+
+    def reset_memory(self):
+        self.states_memory = []
+
+
+class DeliveryAgentTimeWindow(DeliveryQAgent):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.time_windows = []
+
     def act(self, s):
 
         # Get Q Vector
@@ -27,15 +60,10 @@ class DeliveryQAgent(QAgent):
         if np.random.rand() > self.epsilon:
             a = np.argmax(q)
         else:
-            a = np.random.choice([x for x in range(self.actions_size) if x not in self.states_memory])
+            available_states = [x for x in range(self.actions_size) if x not in self.states_memory]
+            a = np.random.choice(available_states)
 
         return a
-
-    def remember_state(self, s):
-        self.states_memory.append(s)
-
-    def reset_memory(self):
-        self.states_memory = []
 
 
 def run_episode(env, agent, verbose=1):
@@ -87,7 +115,7 @@ def run_n_episodes(env, agent, name="training.gif", n_episodes=1000, render_each
 
     # Experience replay
     for i in tqdm_notebook(range(n_episodes)):
-
+        print('episod: ' + str(i))
         # Run the episode
         env, agent, episode_reward = run_episode(env, agent, verbose=0)
         rewards.append(episode_reward)
