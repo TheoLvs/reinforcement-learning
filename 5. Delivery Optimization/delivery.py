@@ -16,7 +16,7 @@ class DeliveryQAgent(QAgent):
         super().__init__(*args, **kwargs)
         self.states_memory = []
 
-    def act(self, s, shift=-1):
+    def act(self, s):
 
         # Get Q Vector
         q = np.copy(self.Q[s, :])
@@ -28,10 +28,7 @@ class DeliveryQAgent(QAgent):
             a = np.argmax(q)
         else:
             possible_states = [x for x in range(self.actions_size) if x not in self.states_memory]
-            if shift > -1:
-                for x in range(self.actions_size):
-                    if self.time_window == shift:
-                        possible_states.remove(x)
+
             a = np.random.choice(possible_states)
 
         return a
@@ -115,7 +112,8 @@ def run_n_episodes(env, agent, name="training.gif", n_episodes=1000, render_each
 
     # Experience replay
     for i in tqdm_notebook(range(n_episodes)):
-        print('episod: ' + str(i))
+        if i % 100 == 0:
+            print('episod: ' + str(i))
         # Run the episode
         env, agent, episode_reward = run_episode(env, agent, verbose=0)
         rewards.append(episode_reward)
