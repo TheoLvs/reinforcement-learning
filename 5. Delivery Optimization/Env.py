@@ -109,7 +109,7 @@ class DeliveryEnvironment(object):
         color = 'red'
         if self.method in ['time_window', 'hard_constraint']:
             color = []
-            for i in range(8):
+            for i in range(len(self.time_window)):
                 if self.time_window[i] == 0:
                     color.append('red')
                 else:
@@ -166,10 +166,10 @@ class DeliveryEnvironment(object):
 
         # Get current state
         state = self._get_state()
-        if self.method == 'hard_constraint' and self._is_state_reachable(state, destination):
+        if self.method == 'hard_constraint' and not self._is_state_reachable(state, destination):
             # Destination is not reachable due to Hard Constraint -
             # Reward should stop agent from banging the head against the wall
-            return state, -1, False
+            return state, 1, False
         new_state = destination
 
         # Get reward for such a move
@@ -219,11 +219,12 @@ class DeliveryEnvironment(object):
         # This method implements Hard Constraints
         # That is when some state is not reachable from another.
         # Note that the states reachable vector is dynamic
-        available_states = []
-        if self.time_window[origin] <= self.time_window[destination]:
-            return False
-        else:
+        # the constraint is to finish one time window before the other
+        if self.time_window[origin] == self.time_window[destination] \
+                or self.time_window.count(self.time_window[origin]) == len(self.stops) :
             return True
+        else:
+            return False
 
     @staticmethod
     def _calculate_point(x1, x2, y1, y2, x=None, y=None):
