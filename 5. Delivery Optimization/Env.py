@@ -78,7 +78,7 @@ class DeliveryEnvironment(object):
 
             xy = np.array(points)
 
-        elif self.method == "time_window":
+        elif self.method in ["time_window", 'hard_constraint']:
             self.time_window = []
             for t in range(self.n_stops):
                 self.time_window.append(round(np.random.rand()))
@@ -107,7 +107,7 @@ class DeliveryEnvironment(object):
 
         # Show stops
         color = 'red'
-        if self.method == 'time_window':
+        if self.method in ['time_window', 'hard_constraint']:
             color = []
             for i in range(8):
                 if self.time_window[i] == 0:
@@ -166,7 +166,7 @@ class DeliveryEnvironment(object):
 
         # Get current state
         state = self._get_state()
-        if self.method == 'hard_constraint' and state not in self._is_state_reachable(state, destination):
+        if self.method == 'hard_constraint' and self._is_state_reachable(state, destination):
             # Destination is not reachable due to Hard Constraint -
             # Reward should stop agent from banging the head against the wall
             return state, -1, False
@@ -193,7 +193,7 @@ class DeliveryEnvironment(object):
     def _get_reward(self, state, new_state):
         base_reward = self.q_stops[state, new_state]
 
-        if self.method == "distance":
+        if self.method in ["distance", 'hard_constraint']:
             return base_reward
         elif self.method == "traffic_box":
             # Additional reward correspond to slowing down in traffic
@@ -216,20 +216,14 @@ class DeliveryEnvironment(object):
         return base_reward + additional_reward
 
     def _is_state_reachable(self, origin, destination):
-        if destination not in self._get_available_states(origin, destination):
-            return False
-        else:
-            return True
-
-    def _get_available_states(self, state):
         # This method implements Hard Constraints
         # That is when some state is not reachable from another.
         # Note that the states reachable vector is dynamic
         available_states = []
-        for i in range(self.n_stops):
-            if self.time_window[state] <= self.time_window[i]:
-                available_states.append(i)
-        return available_states
+        if self.time_window[origin] <= self.time_window[destination]:
+            return False
+        else:
+            return True
 
     @staticmethod
     def _calculate_point(x1, x2, y1, y2, x=None, y=None):
