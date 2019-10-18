@@ -2,6 +2,12 @@
 TODO : 
 - How to set and reload data ?
 - What's the relation between agents and data ?
+- Animation over the simulation (+ipywidgets ?)
+- Action framework with delayed deferrence
+- Metrics storage for each agent
+- Ajouter des zones et des bornes et des méthodes pour aider à bouger
+- méthode pour trouver le plus proche, ou méthode pour avancer de 1 dans la bonne direction
+- Lancer la simulation jusqu'à un certain point (early stopping + condition d'arrêt)
 
 """
 
@@ -9,6 +15,26 @@ TODO :
 import pandas as pd
 import numpy as np
 import uuid
+
+
+def action(duration,delay = 0,periods = 1,loop = False):
+    t = 0
+
+    while True:
+        if t%(duration+delay) < delay:
+            start,end = False,False
+            yield start,end
+        else:
+            start,end = True,False
+            yield start,end
+        t += 1
+
+        if not loop:
+            if t//(duration+delay) >= periods:
+                break
+
+    start,end = True,True
+    yield start,end
 
 
 
@@ -79,7 +105,7 @@ class Environment2D(Environment):
         super().__init__()
 
     def show(self):
-        self.data["coords"].apply(pd.Series).rename(columns = {0:"x",1:"y"}).plot(kind = "scatter",x=0,y=1,figsize = (6,6))
+        self.data[["x","y"]].plot(kind = "scatter",x="x",y="y")
 
 
         
@@ -158,12 +184,16 @@ class Rabbit(Agent):
         # Prepare agent parameters
         agent_data = {
             "life":np.random.randint(10,20),
-            "coords":(np.random.randint(0,10),np.random.randint(0,10)),
+            "x":np.random.randint(0,10),
+            "y":np.random.randint(0,10),
+            "recharge":np.random.randint(0,10),
         }
         agent_data["life_left"] = agent_data["life"]
 
         # Init
         super().__init__(env,agent_data)
+
+        self.actions = action(agent_data["recharge"])
 
 
 
@@ -171,6 +201,18 @@ class Rabbit(Agent):
         super().step()
 
         self.sub("life_left",1)
+
+        try:
+            start,end = next(self.actions)
+            if end:
+                print(f"Recharge {self.agent_id}!")
+                self.add("life_left",10)
+        except:
+            pass
+
+        # Aleatory move
+        self.sub("x",np.random.randint(-1,2))
+        self.sub("y",np.random.randint(-1,2))
         
         if self["life_left"] == 0:
             self.env.remove_agent(self.agent_id)
