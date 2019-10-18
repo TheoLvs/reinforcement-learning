@@ -14,7 +14,10 @@ TODO :
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import uuid
+import imageio
+
 
 
 def action(duration,delay = 0,periods = 1,loop = False):
@@ -89,11 +92,17 @@ class Environment:
             reward += reward_agent
         return reward
 
-    def run(self,n):
+    def run(self,n,fps = 10):
         rewards = []
+        imgs = []
         for i in range(n):
             reward = self.step()
             rewards.append(reward)
+            img = self.show(return_img = True)
+            imgs.append(img)
+
+        imageio.mimsave("test.gif",imgs)
+
         return rewards
 
 
@@ -104,8 +113,19 @@ class Environment2D(Environment):
     def __init__(self):
         super().__init__()
 
-    def show(self):
-        self.data[["x","y"]].plot(kind = "scatter",x="x",y="y")
+    def show(self,return_img = False):
+
+        fig = plt.figure(figsize=(7,7))
+        ax = fig.add_subplot(111)
+        self.data[["x","y"]].plot(kind = "scatter",x="x",y="y",ax = ax)
+
+        if return_img:
+            # From https://ndres.me/post/matplotlib-animated-gifs-easily/
+            fig.canvas.draw_idle()
+            image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+            image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            plt.close()
+            return image
 
 
         
