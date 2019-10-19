@@ -141,35 +141,58 @@ def fig_to_img(fig):
     return image
 
 
+
+class Zone2D:
+
+    def __init__(self,xmin,xmax,ymin,ymax,forbidden = False):
+
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.forbidden = forbidden
+
+    def contains(self,x,y):
+        return self.contains_x(x) and self.contains_y(y)
+
+    def contains_x(self,x):
+        return (self.xmin < x < self.xmax)
+
+    def contains_y(self,y):
+        return (self.ymin < y < self.ymax)
+
+    def allow(self,x = None,y = None):
+
+        if x is None:
+            contains = self.contains_y(y)
+        elif y is None:
+            contains = self.contains_x(x)
+        else:
+            contains = self.contains(x,y)
+
+        if not self.forbidden:
+            return contains
+        else:
+            return not contains
+
+
+
+
+
+
+
+
+
 class Environment2D(Environment):
-    def __init__(self,bounds = None):
+    def __init__(self,zones = None):
         """2D Environment
         bounds = (xmin,xmax,ymin,ymax)
         Add something like an occlusion zone, or at least somewhere where agents can't go
         """
         super().__init__()
-        self.bounds = bounds
+        self.zones = zones
 
 
-    @property
-    def xmin(self):
-        if self.bounds is not None:
-            return self.bounds[0]
-
-    @property
-    def xmax(self):
-        if self.bounds is not None:
-            return self.bounds[1]
-    
-    @property
-    def ymin(self):
-        if self.bounds is not None:
-            return self.bounds[2]
-
-    @property
-    def ymax(self):
-        if self.bounds is not None:
-            return self.bounds[3]
 
 
 
@@ -180,9 +203,9 @@ class Environment2D(Environment):
         ax = fig.add_subplot(111)
 
         # Set bounds if needed
-        if self.bounds is not None:
-            ax.set_xlim([self.xmin,self.xmax])
-            ax.set_ylim([self.ymin,self.ymax])
+        if self.zones is not None:
+            ax.set_xlim([self.zones[0].xmin,self.zones[0].xmax])
+            ax.set_ylim([self.zones[0].ymin,self.zones[0].ymax])
 
         # Plot scatter plot
         self.data[["x","y"]].plot(kind = "scatter",x="x",y="y",ax = ax)
@@ -288,8 +311,18 @@ class Agent2D(Agent):
 
         # Move with delta directions
         else:
-            self.add("x",dx)
-            self.add("y",dy)
+
+            # Compute new directions
+            x = self["x"] + dx
+            y = self["y"] + dy
+
+            # Change if allowed
+            if self.env.zones is None or all(map(lambda zone : zone.allow(x = x),self.env.zones)):
+                self.set("x",x)
+
+            if self.env.zones is None or all(map(lambda zone : zone.allow(y = y),self.env.zones)):
+                self.set("y",y)
+
 
 
     def move_towards(self,x_target,y_target):
