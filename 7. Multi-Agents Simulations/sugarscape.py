@@ -1,24 +1,17 @@
-"""
-TODO : 
-- How to set and reload data ?
-- What's the relation between agents and data ?
-- Animation over the simulation (+ipywidgets ?)
-- Action framework with delayed deferrence
-- Metrics storage for each agent
-- Ajouter des zones et des bornes et des méthodes pour aider à bouger
-- méthode pour trouver le plus proche, ou méthode pour avancer de 1 dans la bonne direction
-- Lancer la simulation jusqu'à un certain point (early stopping + condition d'arrêt)
 
-"""
-
-
+# Base libraries
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
 import imageio
 from tqdm import tqdm_notebook
+from collections import defaultdict
 
+# Interaction & animation
+from ipywidgets import widgets
+from IPython.display import display
+from ipywidgets import interact,IntSlider,Text
 
 
 def action(duration,delay = 0,periods = 1,loop = False):
@@ -109,13 +102,11 @@ class Environment:
             reward = self._data["agent"].map(lambda x : x.step()).sum()
 
 
-    def run(self,n,fps = 10,save = None):
+    def run(self,n,render = True):
         """Run episode function
         """
 
-        # Create placeholders
-        rewards = []
-        imgs = []
+        experiment = Experiment()
 
         # Loop each step in the episode
         for i in tqdm_notebook(range(n)):
@@ -129,20 +120,25 @@ class Environment:
 
             # Otherwise append to reward and save image
             else:
-                rewards.append(reward)
 
-                if save is not None:
-                    assert isinstance(save,str)
-                    img = self.show(return_img = True)
-                    imgs.append(img)
+                data = {"reward":reward}
 
-        if save is not None:
-            imageio.mimsave(save,imgs)
+                if render:
+                    fig = self.render(return_fig = True)
+                    data["fig"] = fig
 
-        return rewards
+                experiment.log(data)
 
 
+        return experiment
 
+
+def fig_to_img(fig):
+    fig.canvas.draw_idle()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    plt.close()
+    return image
 
 
 class Environment2D(Environment):
@@ -177,7 +173,7 @@ class Environment2D(Environment):
 
 
 
-    def show(self,return_img = False):
+    def render(self,return_img = False,return_fig = False):
 
         # Create figure
         fig = plt.figure(figsize=(7,7))
@@ -194,11 +190,13 @@ class Environment2D(Environment):
         # Return image for animation
         if return_img:
             # From https://ndres.me/post/matplotlib-animated-gifs-easily/
-            fig.canvas.draw_idle()
-            image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-            image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            img = fig_to_img(fig)
+            return img
+
+        # Return figure
+        if return_fig:
             plt.close()
-            return image
+            return fig
 
 
         
@@ -262,44 +260,59 @@ class Agent:
         self.env._data.loc[self.agent_id,key] /= value
 
 
-    def move(self,x = None,y = None,dx = 0,dy = 0,bounds = None):
-        """TODO find a way to do allowed moves programmatically and dynamically
-        Bounds is just temporary
+
+class Agent2D(Agent):
+
+
+    def move(self,x = None,y = None,dx = 0,dy = 0,angle = None):
+        """Move function for base agent
+
+        TODO:
+        - find a way to do allowed moves programmatically and dynamically
+        - Subclass this function into a Agent2D
         """
 
         # Move if x and y are given
-        # Todo to be implemented
         if x is not None and y is not None:
             pass
+
+        # Move if angle and velocity are given
+        elif angle is not None:
+
+            # Compute delta directions with basic trigonometry
+            dx = self.velocity * np.cos(angle)
+            dy = self.velocity * np.sin(angle)
+
+            # Move towards other point
+            self.move(dx = dx,dy = dy)
+
+        # Move with delta directions
         else:
-            # Move if dx or dy are given
-            x = self.get("x")
-            y = self.get("y")
-            xnew = x + dx
-            ynew = y + dy
-            if bounds is not None:
-                xnew = np.clip(xnew,bounds[0],bounds[1])
-                ynew = np.clip(ynew,bounds[2],bounds[3])
-
-            self.set("x",xnew)
-            self.set("y",ynew)
+            self.add("x",dx)
+            self.add("y",dy)
 
 
-    def move_towards(self,x_target,y_target,velocity=1):
+    def move_towards(self,x_target,y_target):
 
         # Find coords
         x,y = self.get("x"),self.get("y")
 
         # Compute direction with basic trigonometry
         angle = np.arctan2(y_target - y,x_target - x)
-        dx = velocity * np.cos(angle)
-        dy = velocity * np.sin(angle)
 
-        # Move towards other point
-        self.move(dx = dx,dy = dy)
+        # Move towards target
+        self.move(angle = angle)
 
 
     def wander(self,pivot_frequency):
+
+        t = 0
+        angle = np.random.uniform(0,2*np.pi)          
+
+        while True:
+
+            dx = n
+
         pass
 
 
@@ -307,11 +320,8 @@ class Agent:
 
 
 class StaticAgent(Agent):
-    def __init__(self,env,agent_data):
-        super().__init__(env,agent_data)
+    pass
 
-    def move(self):
-        pass
 
 
 
@@ -324,7 +334,7 @@ class StaticAgent(Agent):
 
 
 
-class Rabbit(Agent):
+class Rabbit(Agent2D):
     def __init__(self,env,**kwargs):
 
         # Prepare agent parameters
@@ -332,6 +342,7 @@ class Rabbit(Agent):
             "life":np.random.randint(100,200),
             "x":np.random.randint(0,10),
             "y":np.random.randint(0,10),
+            "velocity":0.5,
         }
         agent_data["life_left"] = agent_data["life"]
 
@@ -339,7 +350,10 @@ class Rabbit(Agent):
         super().__init__(env,agent_data)
 
 
-
+    @property
+    def velocity(self):
+        return self["velocity"]
+    
 
     def step(self):
         super().step()
@@ -358,7 +372,7 @@ class Rabbit(Agent):
         # dx,dy = np.random.randn() / 5,np.random.randn() / 5
         # self.move(dx = dx,dy = dy)
 
-        self.move_towards(10,10,0.5)
+        self.move_towards(10,10)
 
         if self["life_left"] == 0:
             self.env.remove_agent(self.agent_id)
@@ -376,5 +390,53 @@ class Food(StaticAgent):
 
 
 class Sugarscape(Environment2D):
+    pass
+
+
+
+class Experiment:
+
     def __init__(self):
+
+        self.data = defaultdict(list)
+
+
+    @property
+    def fig(self):
+        return self.data["fig"]
+    
+
+    def log(self,data):
+        for k,v in data.items():
+            self.data[k].append(v)
+
+    def save_as_gif(self,path):
         pass
+
+
+        #         if save is not None:
+        #             assert isinstance(save,str)
+        #             img = self.show(return_img = True)
+        #             imgs.append(img)
+
+        # if save is not None:
+        #     imageio.mimsave(save,imgs)
+
+    def replay(self):
+
+        play = widgets.Play(
+            value=0,
+            min=0,
+            max=len(self.fig)-1,
+            step=1,
+            description="Press play",
+            disabled=False
+        )
+
+
+        @interact(
+            i = play,
+            # path = Text(value='test.gif',placeholder='Type something',description='Path for gif:'),
+        )
+        def show(i):
+            return self.fig[i]
