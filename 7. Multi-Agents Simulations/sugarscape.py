@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import uuid
 import imageio
+from tqdm import tqdm_notebook
 
 
 
@@ -86,22 +87,52 @@ class Environment:
         return self._data.loc[agent_id,"agent"]
 
     def step(self):
+        """Discrete step function 
+        """
+
+        # Initialize reward at 0
         reward = 0
+
+        # Loop over each agent
         for agent in self.agents:
             reward_agent = agent.step()
             reward += reward_agent
-        return reward
 
-    def run(self,n,fps = 10):
+        # Compute if episode is finished
+        done = len(self.agents) == 0
+
+        return reward,done
+
+
+    def run(self,n,fps = 10,save = None):
+        """Run episode function
+        """
+
+        # Create placeholders
         rewards = []
         imgs = []
-        for i in range(n):
-            reward = self.step()
-            rewards.append(reward)
-            img = self.show(return_img = True)
-            imgs.append(img)
 
-        imageio.mimsave("test.gif",imgs)
+        # Loop each step in the episode
+        for i in tqdm_notebook(range(n)):
+
+            # Compute reward and if episode is finished
+            reward,done = self.step()
+
+            # If episode is finished stop
+            if done:
+                break
+
+            # Otherwise append to reward and save image
+            else:
+                rewards.append(reward)
+
+                if save is not None:
+                    assert isinstance(save,str)
+                    img = self.show(return_img = True)
+                    imgs.append(img)
+
+        if save is not None:
+            imageio.mimsave(save,imgs)
 
         return rewards
 
@@ -110,15 +141,52 @@ class Environment:
 
 
 class Environment2D(Environment):
-    def __init__(self):
+    def __init__(self,bounds = None):
+        """2D Environment
+        bounds = (xmin,xmax,ymin,ymax)
+        Add something like an occlusion zone, or at least somewhere where agents can't go
+        """
         super().__init__()
+        self.bounds = bounds
+
+
+    @property
+    def xmin(self):
+        if self.bounds is not None:
+            return self.bounds[0]
+
+    @property
+    def xmax(self):
+        if self.bounds is not None:
+            return self.bounds[1]
+    
+    @property
+    def ymin(self):
+        if self.bounds is not None:
+            return self.bounds[2]
+
+    @property
+    def ymax(self):
+        if self.bounds is not None:
+            return self.bounds[3]
+
+
 
     def show(self,return_img = False):
 
+        # Create figure
         fig = plt.figure(figsize=(7,7))
         ax = fig.add_subplot(111)
+
+        # Set bounds if needed
+        if self.bounds is not None:
+            ax.set_xlim([self.xmin,self.xmax])
+            ax.set_ylim([self.ymin,self.ymax])
+
+        # Plot scatter plot
         self.data[["x","y"]].plot(kind = "scatter",x="x",y="y",ax = ax)
 
+        # Return image for animation
         if return_img:
             # From https://ndres.me/post/matplotlib-animated-gifs-easily/
             fig.canvas.draw_idle()
@@ -133,6 +201,8 @@ class Environment2D(Environment):
 #======================================================================================
 # AGENT CLASSES
 #======================================================================================
+
+
 
 
 class Agent:
@@ -187,6 +257,53 @@ class Agent:
         self.env._data.loc[self.agent_id,key] /= value
 
 
+    def move(self,x = None,y = None,dx = 0,dy = 0,bounds = None):
+        """TODO find a way to do allowed moves programmatically and dynamically
+        Bounds is just temporary
+        """
+
+        # Move if x and y are given
+        # Todo to be implemented
+        if x is not None and y is not None:
+            pass
+        else:
+            # Move if dx or dy are given
+            x = self.get("x")
+            y = self.get("y")
+            xnew = x + dx
+            ynew = y + dy
+            if bounds is not None:
+                xnew = np.clip(xnew,bounds[0],bounds[1])
+                ynew = np.clip(ynew,bounds[2],bounds[3])
+
+            self.set("x",xnew)
+            self.set("y",ynew)
+
+
+    def move_towards(self,x_target,y_target,velocity=1):
+
+        # Find coords
+        x,y = self.get("x"),self.get("y")
+
+        # Compute direction with basic trigonometry
+        angle = np.arctan2(y_target - y,x_target - x)
+        dx = velocity * np.cos(angle)
+        dy = velocity * np.sin(angle)
+
+        # Move towards other point
+        self.move(dx = dx,dy = dy)
+
+
+
+
+
+class StaticAgent(Agent):
+    def __init__(self,env,agent_data):
+        super().__init__(env,agent_data)
+
+    def move(self):
+        pass
+
 
 
 
@@ -203,17 +320,15 @@ class Rabbit(Agent):
 
         # Prepare agent parameters
         agent_data = {
-            "life":np.random.randint(10,20),
+            "life":np.random.randint(100,200),
             "x":np.random.randint(0,10),
             "y":np.random.randint(0,10),
-            "recharge":np.random.randint(0,10),
         }
         agent_data["life_left"] = agent_data["life"]
 
         # Init
         super().__init__(env,agent_data)
 
-        self.actions = action(agent_data["recharge"])
 
 
 
@@ -222,18 +337,21 @@ class Rabbit(Agent):
 
         self.sub("life_left",1)
 
-        try:
-            start,end = next(self.actions)
-            if end:
-                print(f"Recharge {self.agent_id}!")
-                self.add("life_left",10)
-        except:
-            pass
+
+        # try:
+        #     start,end = next(self.actions)
+        #     if end:
+        #         print(f"Recharge {self.agent_id}!")
+        #         self.add("life_left",10)
+        # except:
+        #     pass
 
         # Aleatory move
-        self.sub("x",np.random.randint(-1,2))
-        self.sub("y",np.random.randint(-1,2))
-        
+        # dx,dy = np.random.randn() / 5,np.random.randn() / 5
+        # self.move(dx = dx,dy = dy)
+
+        self.move_towards(10,10,0.5)
+
         if self["life_left"] == 0:
             self.env.remove_agent(self.agent_id)
             return -1
