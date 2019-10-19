@@ -304,17 +304,24 @@ class Agent2D(Agent):
         self.move(angle = angle)
 
 
-    def wander(self,pivot_frequency):
-
+    @staticmethod
+    def generator_wander(pivot_frequency):
         t = 0
-        angle = np.random.uniform(0,2*np.pi)          
-
         while True:
+            if t % pivot_frequency == 0:
+                angle = np.random.uniform(0,2*np.pi) 
+            yield angle
+            t += 1
 
-            dx = n
+    def wander(self,gen = None,pivot_frequency = 3):
 
-        pass
+        if not hasattr(self,"_generator_wander"):
+            self._generator_wander = self.generator_wander(pivot_frequency)
+        if gen is None:
+            gen = self._generator_wander
 
+        angle = next(gen)
+        self.move(angle = angle)
 
 
 
@@ -349,6 +356,9 @@ class Rabbit(Agent2D):
         # Init
         super().__init__(env,agent_data)
 
+        # Init moves generators
+        self._generator_wander = self.generator_wander(pivot_frequency = 5)
+
 
     @property
     def velocity(self):
@@ -372,7 +382,10 @@ class Rabbit(Agent2D):
         # dx,dy = np.random.randn() / 5,np.random.randn() / 5
         # self.move(dx = dx,dy = dy)
 
-        self.move_towards(10,10)
+
+        self.wander()
+
+        # self.move_towards(10,10)
 
         if self["life_left"] == 0:
             self.env.remove_agent(self.agent_id)
@@ -411,8 +424,9 @@ class Experiment:
             self.data[k].append(v)
 
     def save_as_gif(self,path):
+        """Save experiment as gif
+        """
         pass
-
 
         #         if save is not None:
         #             assert isinstance(save,str)
@@ -423,6 +437,10 @@ class Experiment:
         #     imageio.mimsave(save,imgs)
 
     def replay(self):
+        """Replay function using ipywidgets and interact
+        TODO:
+        - Add slider for finetuning
+        """
 
         play = widgets.Play(
             value=0,
@@ -436,7 +454,6 @@ class Experiment:
 
         @interact(
             i = play,
-            # path = Text(value='test.gif',placeholder='Type something',description='Path for gif:'),
         )
         def show(i):
             return self.fig[i]
