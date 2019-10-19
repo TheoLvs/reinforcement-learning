@@ -86,22 +86,27 @@ class Environment:
     def get_agent(self,agent_id):
         return self._data.loc[agent_id,"agent"]
 
-    def step(self):
+    def step(self,fast = False):
         """Discrete step function 
         """
 
-        # Initialize reward at 0
-        reward = 0
+        if not fast:
 
-        # Loop over each agent
-        for agent in self.agents:
-            reward_agent = agent.step()
-            reward += reward_agent
+            # Initialize reward at 0
+            reward = 0
 
-        # Compute if episode is finished
-        done = len(self.agents) == 0
+            # Loop over each agent
+            for agent in self.agents:
+                reward_agent = agent.step()
+                reward += reward_agent
 
-        return reward,done
+            # Compute if episode is finished
+            done = len(self.agents) == 0
+
+            return reward,done
+
+        else:
+            reward = self._data["agent"].map(lambda x : x.step()).sum()
 
 
     def run(self,n,fps = 10,save = None):
@@ -294,6 +299,10 @@ class Agent:
         self.move(dx = dx,dy = dy)
 
 
+    def wander(self,pivot_frequency):
+        pass
+
+
 
 
 
@@ -337,7 +346,6 @@ class Rabbit(Agent):
 
         self.sub("life_left",1)
 
-
         # try:
         #     start,end = next(self.actions)
         #     if end:
@@ -360,7 +368,9 @@ class Rabbit(Agent):
 
 
 
-
+class Food(StaticAgent):
+    def __init__(self):
+        pass
 
 
 
