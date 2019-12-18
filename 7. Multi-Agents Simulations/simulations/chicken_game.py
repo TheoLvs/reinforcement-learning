@@ -50,6 +50,9 @@ class Player(Agent):
                     other.status = 0
                     self.status += 1
 
+    def interacts_with(self,other):
+        return self.x == other.x,1
+
 
 class ChickenGame(Environment):
 
@@ -58,3 +61,11 @@ class ChickenGame(Environment):
         for agent in self.agents:
             env[agent.x] = str(agent.status)
         return "|"+"".join(env)+"|"
+
+
+
+    def interactions(self):
+        pass
+
+
+

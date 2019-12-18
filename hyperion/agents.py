@@ -37,6 +37,8 @@ class Agent:
     def to_dict(self):
         return attr.asdict(self)
 
-        
+
+    def interacts_with(self,other):
+        return False
     
     

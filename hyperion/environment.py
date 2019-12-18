@@ -2,6 +2,8 @@
 
 from copy import deepcopy
 import pandas as pd
+import numpy as np
+import itertools
 
 class Environment:
 
@@ -32,9 +34,12 @@ class Environment:
     def loc(self,key):
         return self._agents.get(key)
 
-    def get(self,key):
-        series = {x.id:x[key] for x in self.agents}
-        return pd.Series(series)
+    def get(self,key,as_array = True):
+        if as_array:
+            return np.array([x[key] for x in self.agents])
+        else:
+            series = {x.id:x[key] for x in self.agents}
+            return pd.Series(series)
 
     def to_df(self):
         agents = [x.to_dict() for x in self.agents]
@@ -65,3 +70,13 @@ class Environment:
 
         self.destroy()
 
+
+    def interactions(self):
+        combinations = itertools.combinations(self.ids,2)
+        interactions = []
+        for agent1,agent2 in combinations:
+            agent1,agent2 = self.loc(agent1),self.loc(agent2)
+            inter_comb,interaction = agent1.interacts_with(agent2)
+            if inter_comb:
+                interactions.append((agent1,agent2,interaction))
+        return interactions
