@@ -3,6 +3,10 @@
 # Sugarscape simulation
 Inspiration https://www.youtube.com/watch?v=r_It_X7v-1E
 
+> After having worked on creating such an environment, I stumbled onto Unity. 
+> From now on I will use Unity for such simulations. 
+
+
 ## TODO
 - Set and reload data -> ok
 - Animation over the simulation (gif ok, ipywidgets to go)

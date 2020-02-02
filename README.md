@@ -9,7 +9,9 @@
 - Using RL to automatically adapt the cooling in a Data Center (August 2017)
 - Controlling Robots via Reinforcement Learning (November 2017)
 - Playing and solving the Chrome Dinosaur Game with Evolution Strategies and PyTorch (January 2018)
-- Delivery optimization using Reinforcement Learning
+- Delivery optimization using Reinforcement Learning (January 2019)
+- Rubik's Cube optimization (February 2019)
+- Multi-Agents simulations (November 2019)
 
 
 
