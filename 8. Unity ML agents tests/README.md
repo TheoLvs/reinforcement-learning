@@ -6,7 +6,8 @@
 
 ## Rolling a ball (January 2020)
 ![](rolling_a_ball/rollingaball1.png)
-> My first experiment is a simple game about rolling a ball affected by gravity trying to catch all 10 pickups randomly placed in the environment. Movement is directly affected by inertia.  
+> My first experiment is a simple game about rolling a ball affected by gravity trying to catch all 10 pickups randomly placed in the environment. Movement is directly affected by inertia. To create the same env, follow Unity official tutorial https://learn.unity.com/project/roll-a-ball-tutorial
+
 
 
 ## References ✨
@@ -18,7 +19,8 @@
 ### To learn about Unity ML Agents
 - Documentation at https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Readme.md
 - Creating custom environments https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Create-New.md
-
+- Overview of how UML works https://github.com/Unity-Technologies/ml-agents/blob/master/docs/ML-Agents-Overview.md
+- [This great video](https://www.youtube.com/watch?v=x2RBxmooh8w)
 
 
 
@@ -33,3 +35,5 @@ pip install mlagents
 ``` 
 git clone --branch latest_release https://github.com/Unity-Technologies/ml-agents.git
 ```
+- Install Barracuda
+- Copy ML-Agents folder from the cloned repo at ``UnitySDK/Assets`` in your Assets project folder
