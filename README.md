@@ -14,6 +14,10 @@
 - Multi-Agents simulations (November 2019)
 
 
+##### Libraries
+- ``rl`` is a simple library to do Reinforcement Learning with Keras, it uses old Keras versions and should be updated
+- ``hyperion`` is a simple multi agent simulation library
+
 
 ***
 ### References and inspiration
