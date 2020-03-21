@@ -8,6 +8,7 @@ This folder contains experiments on this topics
 # Experiments summary
 - **October 2019** - First attempts to create a Sugarscape experiment. Developed a framework using Dataframes for accelerated computations. Yet too many interactions to code from scratch and low performance
 - **December 2019** - Discovered Unity for such simulations + ML Agents
+- **March 2019** - Due to COVID19 outbreak, I started experiments on Multi Agent modeling and social distancing 
 
 
 # References
@@ -18,6 +19,8 @@ This folder contains experiments on this topics
 - [SPADE](https://spade-mas.readthedocs.io/en/latest/readme.html) - Python
 - [abcEconomics](https://abce.readthedocs.io/en/master/)
 - [GAMA-Platform](https://gama-platform.github.io/)
+- [Manim](https://github.com/3b1b/manim) by the great Grant Sanderson
+- PyGame
 
 ## Tutorials
 - [Introduction to Agent Based Modeling in Python](https://towardsdatascience.com/introduction-to-mesa-agent-based-modeling-in-python-bcb0596e1c9a)
