@@ -8,7 +8,7 @@ This folder contains experiments on this topics
 # Experiments summary
 - **October 2019** - First attempts to create a Sugarscape experiment. Developed a framework using Dataframes for accelerated computations. Yet too many interactions to code from scratch and low performance
 - **December 2019** - Discovered Unity for such simulations + ML Agents
-- **March 2019** - Due to COVID19 outbreak, I started experiments on Multi Agent modeling and social distancing 
+- **March 2019** - Due to COVID19 outbreak, I started experiments on Multi Agent modeling and social distancing. PyGame is a good candidate for 2D simulations similar to Unity but in Python. Many possibilities and spatial O(n2) interactions are really sped up thanks to colliders embedded in PyGame. Movements are still feasible up to 10k agents at least in my first experiments.  
 
 
 # References
