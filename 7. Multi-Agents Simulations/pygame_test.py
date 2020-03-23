@@ -175,8 +175,9 @@ class Obstacle:
         return self.fig.x,self.fig.y,self.fig.width,self.fig.height
 
 
-size = 20
-n_rects = 5
+
+size = 10
+n_rects = 500
 
 rects = []
 
