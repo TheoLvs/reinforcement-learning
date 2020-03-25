@@ -25,9 +25,9 @@ This folder contains experiments on this topics
 ## Tutorials
 - [Introduction to Agent Based Modeling in Python](https://towardsdatascience.com/introduction-to-mesa-agent-based-modeling-in-python-bcb0596e1c9a)
 
-
-# Sugarscape simulation
-Inspiration https://www.youtube.com/watch?v=r_It_X7v-1E
+## Inspiration
+- https://www.complexity-explorables.org/
+- Sugarscape https://www.youtube.com/watch?v=r_It_X7v-1E
 
 ## Features to implement
 - Set and reload data -> ok
