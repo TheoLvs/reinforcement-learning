@@ -28,6 +28,9 @@ This folder contains experiments on this topics
 ## Inspiration
 - https://www.complexity-explorables.org/
 - Sugarscape https://www.youtube.com/watch?v=r_It_X7v-1E
+- youtube.com/watch?v=uVpN136q7N8
+- youtube.com/watch?v=Bot5_DouTWg
+- Ant-based modeling
 
 ## Features to implement
 - Set and reload data -> ok

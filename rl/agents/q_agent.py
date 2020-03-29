@@ -46,16 +46,9 @@ class QAgent(Agent):
         self.Q = self.build_model(states_size,actions_size)
 
 
-
-
-
     def build_model(self,states_size,actions_size):
         Q = np.zeros([states_size,actions_size])
         return Q
-
-
-
-
 
 
     def train(self,s,a,r,s_next):
@@ -63,8 +56,6 @@ class QAgent(Agent):
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-
-
 
 
     def act(self,s):

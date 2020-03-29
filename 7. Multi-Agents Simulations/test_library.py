@@ -24,5 +24,9 @@ for i in range(n_steps):
     env.render()
     time.sleep(step_duration)
 
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            break
+
 
 pygame.quit()
