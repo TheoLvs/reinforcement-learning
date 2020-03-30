@@ -3,11 +3,12 @@ import numpy as np
 import pygame
 
 from ..agent import Agent
+from .rectangle import Rectangle
 
 
 class GridAgent(Rectangle):
-    def __init__(self,x,y,width = 1,height = 1):
-        super().__init__(x,y,width,height)
+    def __init__(self,x,y,width = 1,height = 1,color = (255,0,0)):
+        super().__init__(x,y,width,height,color)
 
     #=================================================================================
     # MOVEMENTS

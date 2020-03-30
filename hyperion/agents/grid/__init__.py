@@ -1,2 +1,2 @@
 from .agent import GridAgent
-from .static import StaticObject
+from .rectangle import Rectangle

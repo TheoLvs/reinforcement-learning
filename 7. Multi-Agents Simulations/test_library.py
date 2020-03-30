@@ -7,14 +7,15 @@ import time
 import pygame
 
 from hyperion.environment.grid import GridEnvironment
-from hyperion.agents.grid import GridAgent,StaticObject
+from hyperion.agents.grid import GridAgent,Rectangle
 
 
 agent = GridAgent(10,20)
+obstacle = Rectangle(20,30,10,10,(0,100,0))
 
 
 # Setup grid
-env = GridEnvironment(10,100,60,agents = [agent])
+env = GridEnvironment(10,100,60,agents = [agent,obstacle])
 n_steps = 100
 step_duration = 0.05
 
