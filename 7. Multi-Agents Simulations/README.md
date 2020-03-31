@@ -41,3 +41,6 @@ This folder contains experiments on this topics
 - Find closest agent method
 - Wander method
 - Launch simulation until certain time + early stopping
+- Circle collider
+- Optimizing tutorial towardsdatascience.com/speeding-up-python-code-fast-filtering-and-slow-loops-8e11a09a9c2f for more optimization
+- A* algorithm for shortest path

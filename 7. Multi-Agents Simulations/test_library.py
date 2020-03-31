@@ -5,6 +5,7 @@ sys.path.append("C:/git/reinforcement-learning")
 
 import time
 import pygame
+import numpy as np
 
 from hyperion.environment.grid import GridEnvironment
 from hyperion.agents.grid import GridAgent,Rectangle
@@ -21,7 +22,7 @@ class TestAgent(GridAgent):
 
 
 
-agent_spawner = lambda x,y : TestAgent(x,y,4,4,BOX_SIZE)
+agent_spawner = lambda x,y : TestAgent(x,y,2,2,BOX_SIZE)
 
 
 
@@ -33,9 +34,12 @@ obstacles = [
     Rectangle(170,10,10,10,BOX_SIZE,(0,200,100)),
 ]
 
+obstacle_spawner = lambda x,y : Rectangle(x,y,np.random.randint(1,10)*10,np.random.randint(1,10)*10,BOX_SIZE,(0,100,200))
+
 
 # Setup grid
-env = GridEnvironment(BOX_SIZE,220,120,objects = obstacles)
+env = GridEnvironment(BOX_SIZE,220,120,objects = None)
+env.spawn(obstacle_spawner,5)
 env.spawn(agent_spawner,20)
 
 n_steps = 1000

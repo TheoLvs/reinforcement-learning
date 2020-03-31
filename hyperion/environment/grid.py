@@ -31,17 +31,19 @@ class GridEnvironment(SpatialEnvironment):
 
     def add_object(self,obj):
 
-        # If we add a list of objects, using recursive function to add each object
-        if isinstance(obj,list):
-            for o in obj:
-                self.add_object(o)
-            
-        # Add object to either the static or agent list
-        else:
-            if obj.static:
-                self.static.append(obj)
+        if obj is not None:
+
+            # If we add a list of objects, using recursive function to add each object
+            if isinstance(obj,list):
+                for o in obj:
+                    self.add_object(o)
+                
+            # Add object to either the static or agent list
             else:
-                self.agents.append(obj)
+                if obj.static:
+                    self.static.append(obj)
+                else:
+                    self.agents.append(obj)
 
 
     #=================================================================================
