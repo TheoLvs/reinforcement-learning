@@ -85,6 +85,7 @@ That's why Dynamic Programming is all about Bottom-up approach. ###
   - Add one more item, then two ... 
 
 Often needs to be thought as a tables (capacity x items)
+
 ![](https://sadakurapati.files.wordpress.com/2013/11/knapsack2.png?w=584)
 
 - Building the table one by one using the formula
