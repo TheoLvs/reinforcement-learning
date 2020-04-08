@@ -96,5 +96,61 @@ Often needs to be thought as a tables (capacity x items)
 - It's not polynomial, but exponential because K is represented in a computer by log(K) bits. So we call this type of algorithms pseudo-polynomials. Because it's only efficient when K is small
 
 
+
+## 🌴 Branch, bound & relaxation
+When you do exhaustive search it's basically building a decision tree of 2^n branches. Relaxation methods are to explore the tree without computing all nodes. We iterate two steps: 
+- **Branching** (splitting the problem into a number of subproblems like in exhaustive search)
+- **Bounding** (finding an optimistic estimate of the best solution to the subproblem, maximization = upper bound & minimization = lower bound)
+
+### How to find an optimization evaluation? How can I relax my problem?
+> - We relax a constraint
+> - Build the tree and evaluate an optimistic estimate
+> - If branching leads to a lower optimisatic estimate, we don't even need to go further in a branch and we can prune it. 
+
+*Branching & bounding can be done a lot of different ways, see Search strategies section*
+
+### What can we relax in the knapsack problem?
+- The capacity constraint -> take everything in the knapsack
+- The selection variable, we can imagine taking a fraction of each item (xi is now a decimal), this is called **linear relaxation** 
+
+Linear relaxation for the knapsack algorithm works by : 
+- Sorting by value density ratio
+- Fill the rest of the knapsack with a fraction of the last item that can partially fit, and you have an optimistic estimate for pruning
+
+
+## 🔍 Search strategies
+
+### Depth-first
+Prunes when a node estimation is worse than the best found
+- Go deep
+- When does it prune? when it finds a new node worse than the found solution
+- Is it memory efficient? It can be if we look at a few branches
+
+### Best-first
+Select the node with the best estimation
+- Go for the best
+- When does it prune? when all the nodes are worse than a found solution
+- It it memory efficient? If we exaggerate and think of a knapsack with infinite capacity, we will commpute the entire tree, so infinite time and infinite space would be required. When the problem is small, it can be efficient. 
+
+
+### Least discrepancy or limited discrepancy search
+Trust a greedy heuristic
+- Assume a good heuristic is available
+  - It makes very few mistakes
+  - Search tree is binary
+  - Following the heuristic means branching left and branching right means the heuristic was wrong
+- Limited Discrepancy Search (LDS)
+  - Avoid mistakes at all costs
+  - Explore the search space in increasing order of mistakes
+  - Trusting the heuristic less and less
+
+We explore the search spaces in waves, and trust the heuristic less and less. <br>Its efficiency really depends on a trade off between space and time. 
+
+
+### And many others search strategies
+
+
+
+
 ## 📚 References
 - [Wikipedia page on Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem)
